@@ -77,6 +77,13 @@ dl.copy button{min-height:36px;padding:4px 10px;font-size:13px}
 [hidden]{display:none!important}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 
+html,body{overflow-x:hidden;max-width:100%}
+.row{grid-template-columns:repeat(2,minmax(0,1fr))}
+.f input,.f textarea,.f select{min-width:0;max-width:100%}
+input[type=date],input[type=time]{min-width:0;max-width:100%;-webkit-appearance:none;appearance:none}
+.time input{flex:1 1 0;width:0;padding:10px;min-height:46px;border:1px solid #c5d0e1;border-radius:10px;background:#fff;font-size:16px;color:var(--ink)}
+.time button{flex:0 0 auto}
+@media(max-width:560px){.row.times{grid-template-columns:1fr;gap:0}}
 details.help{border-top:1px solid var(--line)}details.help:last-of-type{border-bottom:1px solid var(--line)}
 details.help summary{font-weight:700;min-height:50px;display:flex;align-items:center;cursor:pointer;font-size:16px}
 details.help>div{padding:0 0 12px;font-size:15px}details.help ol,details.help ul{padding-left:22px;margin:6px 0}details.help li{margin:5px 0}
@@ -494,7 +501,7 @@ function editHTML(item){
   '<h3 style="margin-top:0">언제 · 어디서</h3>'+
   '<div class="row"><label class="f">날짜<input type="date" name="date" value="'+esc(r.date)+'"></label>'+
   '<label class="f">수어통역사<input name="interpreter" maxlength="20" value="'+esc(r.interpreter)+'"></label></div>'+
-  '<div class="row"><div><label class="f" for="t-start">시작</label><div class="time"><input id="t-start" type="time" name="start" value="'+esc(r.start)+'"><button type="button" data-now="start">지금</button></div></div>'+
+  '<div class="row times"><div><label class="f" for="t-start">시작</label><div class="time"><input id="t-start" type="time" name="start" value="'+esc(r.start)+'"><button type="button" data-now="start">지금</button></div></div>'+
   '<div><label class="f" for="t-end">종료</label><div class="time"><input id="t-end" type="time" name="end" value="'+esc(r.end)+'"><button type="button" data-now="end">지금</button></div></div></div>'+
   '<p class="calc" id="calc"></p>'+
   '<label class="f">장소<input name="place" maxlength="80" value="'+esc(r.place)+'"></label>'+
