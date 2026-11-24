@@ -84,6 +84,9 @@ input[type=date],input[type=time]{min-width:0;max-width:100%;-webkit-appearance:
 .time input{flex:1 1 0;width:0;padding:10px;min-height:46px;border:1px solid #c5d0e1;border-radius:10px;background:#fff;font-size:16px;color:var(--ink)}
 .time button{flex:0 0 auto}
 @media(max-width:560px){.row.times{grid-template-columns:1fr;gap:0}}
+.bar h1 button{all:unset;display:inline-flex;align-items:center;gap:7px;min-height:44px;padding-right:6px;cursor:pointer;color:#fff;font-weight:800;border-radius:8px}
+.bar h1 button:focus-visible{outline:3px solid #9cc0ff;outline-offset:2px}
+.bar h1 button svg{flex:0 0 auto}.bar h1 button span{white-space:nowrap}.bar h1{flex:0 0 auto}.bar .sync{flex:1 1 auto;min-width:0;text-align:right}.bar button{white-space:nowrap;flex:0 0 auto}@media(max-width:360px){.bar h1{font-size:16px}.bar button{padding:5px 7px}}
 details.help{border-top:1px solid var(--line)}details.help:last-of-type{border-bottom:1px solid var(--line)}
 details.help summary{font-weight:700;min-height:50px;display:flex;align-items:center;cursor:pointer;font-size:16px}
 details.help>div{padding:0 0 12px;font-size:15px}details.help ol,details.help ul{padding-left:22px;margin:6px 0}details.help li{margin:5px 0}
@@ -92,7 +95,7 @@ details.help>div{padding:0 0 12px;font-size:15px}details.help ol,details.help ul
 <script src="config.js"></script>
 </head>
 <body>
-<header><div class="bar"><h1 id="title">통역일지</h1><span class="sync" id="sync" role="status" aria-live="polite"></span><button type="button" id="help-btn">도움말</button><button type="button" id="admin-btn" hidden>관리</button><button type="button" id="settings-btn" hidden>설정</button></div></header>
+<header><div class="bar"><h1 id="title"><button type="button" id="home-btn" aria-label="처음 화면으로 (기록 목록)"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h4.5v-5.5h4v5.5h4.5V10"/></svg><span>통역일지</span></button></h1><span class="sync" id="sync" role="status" aria-live="polite"></span><button type="button" id="help-btn">도움말</button><button type="button" id="admin-btn" hidden>관리</button><button type="button" id="settings-btn" hidden>설정</button></div></header>
 <main id="main"></main>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script>
@@ -788,6 +791,7 @@ const HELP = [
   ["field", "현장에서 기록하기", '<ol><li><b>＋ 새 통역 기록</b>을 누릅니다.</li>'+
     '<li>시작·종료는 <b>지금</b> 단추로 넣고, 장소·의뢰인·분류·의뢰방법·통역내용부터 적습니다. 나머지는 나중에 채워도 됩니다.</li>'+
     '<li>적는 대로 <b>자동 저장</b>됩니다. 따로 저장 단추를 누르지 않아도 됩니다.</li>'+
+    '<li>어느 화면에서든 왼쪽 위 <b>집 모양(통역일지)</b>을 누르면 처음 화면(기록 목록)으로 돌아갑니다.</li>'+
     '<li>맨 위 노란 띠에 <b>남은 항목</b>이 보입니다. 누르면 그 칸으로 이동합니다.</li>'+
     '<li>같은 의뢰인·장소가 반복되면 <b>이전 기록에서 불러오기</b>를 쓰세요. 날짜·시간·내용·결과만 새로 적으면 됩니다.</li>'+
     '<li>결과가 아직 정해지지 않았으면 <b>결과 미확정</b>에 체크합니다.</li>'+
@@ -1005,6 +1009,15 @@ function drawQR(canvas, text){
 
 /* ---------- start ---------- */
 $("#settings-btn").onclick = () => go("settings");
+$("#home-btn").onclick = () => {
+  if (view.name === "edit") {
+    const it = findItem(view.id);
+    if (it && !hasContent(it) && !it.rec.start && !it.rec.end) { S.items = S.items.filter(x => x !== it); persist(); }
+    else syncNow();
+  }
+  view.filter = "active"; view.message = "";
+  go(S.settings.token ? "list" : "join");
+};
 $("#help-btn").onclick = () => { helpBack = ["list","detail","edit","settings","admin","join"].includes(view.name) ? (view.name === "edit" || view.name === "detail" ? "list" : view.name) : "list"; go("help"); };
 $("#admin-btn").onclick = () => { adminUsers = null; adminMsg = ""; go("admin"); };
 load(); persist();
