@@ -701,8 +701,8 @@ function adminHTML(){
       '<ul class="list" style="margin-top:14px">'+adminUsers.map(u => '<li class="panel" style="padding:12px"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>'+esc(u.name)+(u.role === "admin" ? ' <span class="chip">관리자</span>' : "")+(u.active ? "" : ' <span class="chip warn">사용 중지</span>')+'</b>'+
         '<span class="muted">연결 코드 <b>'+esc(u.code)+'</b></span></div>'+
         (u.active ? '<div class="actions" style="margin-top:8px"><button type="button" class="primary" data-share="'+esc(u.name)+'">링크 보내기</button><button type="button" data-qr="'+esc(u.name)+'">QR</button>'+
-          '<button type="button" class="ghost" data-reset="'+esc(u.name)+'">코드 다시 만들기</button>'+(u.name !== S.settings.name ? '<button type="button" class="ghost danger" data-active="'+esc(u.name)+'" data-on="0">사용 중지</button>' : "")+'</div>' :
-          '<div class="actions" style="margin-top:8px"><button type="button" data-active="'+esc(u.name)+'" data-on="1">다시 사용</button></div>')+
+          '<button type="button" class="ghost" data-reset="'+esc(u.name)+'">코드 다시 만들기</button>'+(u.name !== S.settings.name ? '<button type="button" class="ghost danger" data-active="'+esc(u.name)+'" data-on="0">사용 중지</button><button type="button" class="ghost danger" data-delete="'+esc(u.name)+'">삭제</button>' : "")+'</div>' :
+          '<div class="actions" style="margin-top:8px"><button type="button" data-active="'+esc(u.name)+'" data-on="1">다시 사용</button><button type="button" class="ghost danger" data-delete="'+esc(u.name)+'">삭제</button></div>')+
         (qrFor === u.name ? '<canvas class="qr" id="uqr" width="200" height="200" aria-label="'+esc(u.name)+' 연결 QR" style="margin-top:10px"></canvas>' : "")+
         '</li>').join("")+'</ul>')+
     '<div class="actions"><button type="button" class="ghost" id="ad-back">돌아가기</button></div></section>';
@@ -711,7 +711,7 @@ async function adminCall(body){
   try {
     const res = await api({...body, token:S.settings.token});
     if (res.error === "auth") { signedOut("연결이 해제되었습니다."); return; }
-    if (!res.ok) { adminMsg = {duplicate:"같은 이름이 이미 있습니다.", name:"이름을 확인하세요.", self:"자기 자신은 사용 중지할 수 없습니다."}[res.error] || "처리하지 못했습니다."; }
+    if (!res.ok) { adminMsg = {duplicate:"같은 이름이 이미 있습니다.", name:"이름을 확인하세요.", self:"자기 자신은 사용 중지하거나 삭제할 수 없습니다.", lastadmin:"마지막 관리자는 삭제할 수 없습니다. 다른 관리자를 먼저 추가하세요.", notfound:"이미 삭제된 통역사입니다."}[res.error] || "처리하지 못했습니다."; }
     else { adminUsers = res.users; adminMsg = ""; }
   } catch { adminMsg = "인터넷 연결을 확인하세요."; }
   if (view.name === "admin") { render(false); if (qrFor) { const c = $("#uqr"); const u = adminUsers && adminUsers.find(x => x.name === qrFor); if (c && u) drawQR(c, inviteLink(u.code)); } }
@@ -729,6 +729,10 @@ function bindAdmin(){
   });
   document.querySelectorAll("[data-qr]").forEach(b => b.onclick = () => { qrFor = qrFor === b.dataset.qr ? "" : b.dataset.qr; render(false); const c = $("#uqr"); const u = adminUsers.find(x => x.name === qrFor); if (c && u) drawQR(c, inviteLink(u.code)); });
   document.querySelectorAll("[data-reset]").forEach(b => b.onclick = () => { if (confirm(b.dataset.reset+"님의 연결 코드를 새로 만들까요? 지금 연결된 기기는 연결이 해제되어 새 링크로 다시 연결해야 합니다.")) adminCall({action:"resetCode", name:b.dataset.reset}); });
+  document.querySelectorAll("[data-delete]").forEach(b => b.onclick = () => {
+    const name = b.dataset.delete;
+    if (confirm(name+"님을 삭제할까요?\n\n· 그 기기의 연결이 끊기고 통역사 목록에서 사라집니다.\n· "+name+"님이 작성한 통역 기록은 지워지지 않고 그대로 남습니다.\n· 다시 쓰려면 이름을 새로 추가하고 새 링크를 보내야 합니다.")) adminCall({action:"deleteUser", name});
+  });
   document.querySelectorAll("[data-active]").forEach(b => b.onclick = () => { const on = b.dataset.on === "1"; if (on || confirm(b.dataset.active+"님의 사용을 중지할까요? 그 기기에서는 더 이상 저장할 수 없습니다.")) adminCall({action:"setActive", name:b.dataset.active, active:on}); });
 }
 
@@ -770,7 +774,7 @@ const HELP = [
     '<li>휴대폰을 바꾸거나 다른 사람이 쓸 때는 <b>설정 → 연결 해제</b>.</li></ul>'],
   ["admin", "관리자: 통역사 추가와 연결 관리", '<ul><li>위쪽 <b>관리</b> → 이름 입력 → <b>추가</b>.</li>'+
     '<li><b>링크 보내기</b>로 카카오톡·문자에 보냅니다. PC에서는 복사됩니다. <b>QR</b>을 눌러 화면을 찍게 해도 됩니다.</li>'+
-    '<li>휴대폰 분실·링크 잘못 보냄: <b>코드 다시 만들기</b>(기존 연결 해제). 퇴사: <b>사용 중지</b>.</li>'+
+    '<li>휴대폰 분실·링크 잘못 보냄: <b>코드 다시 만들기</b>(기존 연결 해제). 잠시 쉬는 경우: <b>사용 중지</b>(다시 사용 가능). 퇴사: <b>삭제</b>(작성한 기록은 남음).</li>'+
     '<li>모든 기록은 센터 구글 계정의 <b>통역일지 기록</b> 시트에 있습니다.</li></ul>'],
   ["privacy", "개인정보 주의", '<ul><li>연결 링크와 코드는 비밀번호처럼 본인만 사용하세요.</li>'+
     '<li>의뢰인은 기존 시스템에서 찾을 수 있을 만큼(이름)만 적고, 연락처·주소는 적지 마세요.</li>'+
