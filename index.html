@@ -519,13 +519,32 @@ function editHTML(item){
   '<h3>결과</h3>'+
   '<label class="f">결과<textarea name="result" maxlength="1000" placeholder="예) 다음 진료를 예약함">'+esc(r.result)+'</textarea></label><div class="counter" id="result-count"></div>'+
   '<label style="display:flex;gap:8px;align-items:center;min-height:44px;font-size:15px"><input type="checkbox" name="pendingResult" style="width:22px;height:22px"'+(r.pendingResult ? " checked" : "")+'>결과 미확정 · 나중에 확인</label>'+
-  '<details'+(r.program || r.deafNames || r.hearingNames ? " open" : "")+'><summary style="font-weight:700;min-height:44px;padding-top:10px;cursor:pointer">프로그램명 · 참석자 (선택)</summary>'+
-  '<label class="f">프로그램명<input name="program" maxlength="100" value="'+esc(r.program)+'"></label>'+
-  '<label class="f">참석 농인 이름 <span class="muted">(쉼표로 구분, 기존 시스템에서 선택)</span><input name="deafNames" maxlength="200" value="'+esc(r.deafNames)+'"></label>'+
-  '<label class="f">참석 청인 이름 <span class="muted">(쉼표로 구분)</span><input name="hearingNames" maxlength="200" value="'+esc(r.hearingNames)+'"></label></details>'+
+  '<h3>참석자 <span class="muted" style="font-weight:500">(선택)</span></h3>'+
+  '<p class="muted" style="margin:0">기존 통역일지의 참석인원(농인)·(청인)에서 고를 이름입니다. 없으면 비워 두세요.</p>'+
+  '<div id="people-deafNames"></div><div id="people-hearingNames"></div>'+
+  '<details'+(r.program ? " open" : "")+'><summary style="font-weight:700;min-height:44px;padding-top:10px;cursor:pointer">프로그램명 (선택)</summary>'+
+  '<label class="f">프로그램명<input name="program" maxlength="100" value="'+esc(r.program)+'"></label></details>'+
   '</form>'+
   '<div class="bottom"><div class="actions" style="margin:0"><button type="button" class="primary" id="done-edit" style="flex:1;min-height:52px">저장하고 목록으로</button>'+
   (wide() ? '<button type="button" id="to-detail" style="min-height:52px">PC 입력 화면</button>' : "")+'<button type="button" class="danger" id="del-edit" style="min-height:52px">삭제</button></div></div>';
+}
+const PEOPLE = {deafNames:"참석 농인", hearingNames:"참석 청인"};
+const splitNames = v => String(v || "").split(/[,，]/).map(x => x.trim()).filter(Boolean);
+function recentPeople(key, exclude){
+  const seen = new Set(exclude), out = [];
+  for (const it of [...S.items].sort((a,b) => b.rec.updated.localeCompare(a.rec.updated))) {
+    if (it.rec.owner !== S.settings.name || it.rec.status === "deleted") continue;
+    for (const n of splitNames(it.rec[key])) if (!seen.has(n)) { seen.add(n); out.push(n); }
+    if (out.length >= 8) break;
+  }
+  return out.slice(0, 8);
+}
+function peopleHTML(r, key){
+  const names = splitNames(r[key]); const recent = recentPeople(key, names);
+  return '<div class="f" style="margin-top:12px"><b>'+PEOPLE[key]+'</b> <span class="muted">'+(names.length ? names.length+"명" : "없음")+'</span></div>'+
+    (names.length ? '<div class="chips" style="margin-top:6px">'+names.map(n => '<button type="button" class="person" data-person-rm="'+key+'" data-value="'+esc(n)+'" aria-label="'+esc(n)+' 빼기">'+esc(n)+' <span aria-hidden="true">×</span></button>').join("")+'</div>' : "")+
+    '<div class="time" style="margin-top:6px"><input data-person-input="'+key+'" maxlength="20" placeholder="이름 입력" aria-label="'+PEOPLE[key]+' 이름" enterkeyhint="done"><button type="button" data-person-add="'+key+'">추가</button></div>'+
+    (recent.length ? '<div class="chips small" style="margin-top:6px">'+recent.map(n => '<button type="button" data-person-pick="'+key+'" data-value="'+esc(n)+'">＋ '+esc(n)+'</button>').join("")+'</div>' : "");
 }
 function bindEdit(item){
   const form = $("#ed");
@@ -541,6 +560,7 @@ function bindEdit(item){
     const sug = r.area ? "" : suggestArea(r);
     const area = $("#area-chips"); area.innerHTML = chipsHTML("area", false, sug);
     area.querySelectorAll("[data-chip]").forEach(b => b.setAttribute("aria-pressed", String(r.area === b.dataset.value)));
+    for (const key of Object.keys(PEOPLE)) { const box = $("#people-"+key); const typed = box.querySelector("input")?.value || ""; const had = box.contains(document.activeElement) && document.activeElement.matches("[data-person-input]"); box.innerHTML = peopleHTML(r, key); const inp = box.querySelector("input"); inp.value = typed; if (had) inp.focus(); }
     const rc = $("#result-count"); rc.textContent = r.result.length + " / " + LIMIT.result + "자"; rc.className = "counter" + (r.result.length > LIMIT.result ? " over" : "");
     const miss = missing(r), warn = warnings(r);
     $("#state").innerHTML = miss.length ? '<button type="button" class="missing" id="jump">남은 항목 '+miss.length+'개: '+esc(miss.map(m => m[1]).join(", "))+' →</button>' :
@@ -552,6 +572,15 @@ function bindEdit(item){
     });
   };
   const set = changes => { commit(item, changes); sync(); };
+  const addPeople = (key, raw) => {
+    const names = splitNames(item.rec[key]);
+    for (const n of splitNames(raw)) if (!names.includes(n) && names.length < 30) names.push(n.slice(0,20));
+    set({[key]: names.join(", ")});
+  };
+  form.addEventListener("keydown", e => {
+    const t = e.target; if (e.key !== "Enter" || !t.dataset || !t.dataset.personInput) return;
+    e.preventDefault(); const key = t.dataset.personInput; const v = t.value; t.value = ""; if (v.trim()) addPeople(key, v); $("#people-"+key+" input").focus();
+  });
   form.addEventListener("input", e => {
     const t = e.target; if (!t.name) return;
     set({[t.name]: t.type === "checkbox" ? t.checked : t.value});
@@ -566,6 +595,9 @@ function bindEdit(item){
       return;
     }
     if (b.dataset.set) { form[b.dataset.set].value = b.dataset.value; set({[b.dataset.set]: b.dataset.value}); return; }
+    if (b.dataset.personAdd) { const key = b.dataset.personAdd; const inp = $("#people-"+key+" input"); const v = inp.value; inp.value = ""; if (v.trim()) addPeople(key, v); else inp.focus(); return; }
+    if (b.dataset.personPick) { addPeople(b.dataset.personPick, b.dataset.value); return; }
+    if (b.dataset.personRm) { const key = b.dataset.personRm; set({[key]: splitNames(item.rec[key]).filter(n => n !== b.dataset.value).join(", ")}); return; }
     if (b.dataset.now) { const v = koreaTime(); form[b.dataset.now].value = v; set({[b.dataset.now]: v}); return; }
     if (b.dataset.copyfrom) {
       const src = findItem(b.dataset.copyfrom)?.rec; if (!src) return;
@@ -759,6 +791,7 @@ const HELP = [
     '<li>맨 위 노란 띠에 <b>남은 항목</b>이 보입니다. 누르면 그 칸으로 이동합니다.</li>'+
     '<li>같은 의뢰인·장소가 반복되면 <b>이전 기록에서 불러오기</b>를 쓰세요. 날짜·시간·내용·결과만 새로 적으면 됩니다.</li>'+
     '<li>결과가 아직 정해지지 않았으면 <b>결과 미확정</b>에 체크합니다.</li>'+
+    '<li><b>참석자</b>(선택): 이름을 적고 <b>추가</b>. 빼려면 이름의 <b>×</b>를 누릅니다. 전에 적은 이름은 <b>＋ 이름</b>으로 바로 추가됩니다.</li>'+
     '<li>새벽·오전·오후·저녁 분은 기존 통역일지가 자동 계산하므로 입력하지 않습니다.</li></ol>'],
   ["status", "표시의 뜻", '<dl class="copy">'+
     '<div><dt>작성 중</dt><dd>필수 항목이 남아 있습니다.</dd><span></span></div>'+
