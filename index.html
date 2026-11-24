@@ -76,11 +76,16 @@ dl.copy button{min-height:36px;padding:4px 10px;font-size:13px}
 .diff input{width:20px;height:20px;margin-top:2px}
 [hidden]{display:none!important}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+details.help{border-top:1px solid var(--line)}details.help:last-of-type{border-bottom:1px solid var(--line)}
+details.help summary{font-weight:700;min-height:50px;display:flex;align-items:center;cursor:pointer;font-size:16px}
+details.help>div{padding:0 0 12px;font-size:15px}details.help ol,details.help ul{padding-left:22px;margin:6px 0}details.help li{margin:5px 0}
+@media(max-width:420px){.bar{gap:6px;padding:8px 10px}.bar h1{font-size:17px}.bar button{padding:5px 8px;font-size:13px}.sync{font-size:12px;white-space:normal;text-align:right;max-width:96px}}
 </style>
 <script src="config.js"></script>
 </head>
 <body>
-<header><div class="bar"><h1 id="title">통역일지</h1><span class="sync" id="sync" role="status" aria-live="polite"></span><button type="button" id="admin-btn" hidden>관리</button><button type="button" id="settings-btn" hidden>설정</button></div></header>
+<header><div class="bar"><h1 id="title">통역일지</h1><span class="sync" id="sync" role="status" aria-live="polite"></span><button type="button" id="help-btn">도움말</button><button type="button" id="admin-btn" hidden>관리</button><button type="button" id="settings-btn" hidden>설정</button></div></header>
 <main id="main"></main>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script>
@@ -368,6 +373,7 @@ function render(focus){
   renderSync();
   $("#admin-btn").hidden = !(S.settings.token && isAdmin());
   $("#settings-btn").hidden = !S.settings.token;
+  if (view.name === "help") { main_help(); return; }
   const main = $("#main");
   if (!SCRIPT_URL) { main.innerHTML = '<section class="panel"><h2>설정이 필요합니다</h2><p>config.js에 구글 연결 주소가 없습니다. 관리자에게 알려 주세요.</p></section>'; return; }
   if (!S.settings.token || view.name === "join") { main.innerHTML = joinHTML(); bindJoin(); return; }
@@ -393,9 +399,10 @@ function joinHTML(){
     '<p>관리자에게 받은 <b>링크를 누르면</b> 자동으로 연결됩니다.</p>'+
     '<p class="muted">아이폰에서 홈 화면 아이콘으로 처음 열었을 때는 받은 <b>8자리 연결 코드</b>를 한 번 입력하세요.</p>'+
     '<form id="jf"><label class="f">연결 코드<input name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" pattern="[0-9]*" placeholder="12345678" style="font-size:24px;letter-spacing:.2em;text-align:center"></label>'+
-    '<button class="primary big" style="margin-top:14px" type="submit">연결</button></form><p id="jmsg" class="muted" role="status"></p></section>';
+    '<button class="primary big" style="margin-top:14px" type="submit">연결</button></form><p id="jmsg" class="muted" role="status"></p><p><a href="#" id="join-help">사용방법 보기</a></p></section>';
 }
 function bindJoin(){
+  $("#join-help").onclick = e => { e.preventDefault(); helpBack = "join"; go("help"); };
   $("#jf").onsubmit = async e => {
     e.preventDefault();
     const code = $("#jf").code.value.replace(/\D/g,"");
@@ -442,13 +449,15 @@ function listHTML(){
         '<span class="chip '+r.status+'">'+STATUS[r.status]+(r.status==="draft" && miss.length ? " · "+(miss.length <= 2 ? miss.map(m => m[1]).join(", ")+" 남음" : miss.length+"개 남음") : "")+'</span>';
       const sub = [r.date ? r.date.slice(5).replace("-","/")+"("+weekday(r.date)+")" : "", r.start && r.end ? r.start+"~"+r.end : "", r.division, r.area, r.owner !== S.settings.name ? r.owner : "", it.dirty ? "저장 대기" : ""].filter(Boolean).join(" · ");
       return '<li><button type="button" class="item" data-open="'+esc(r.id)+'" aria-current="'+(view.id===r.id)+'"><span>'+esc(r.client || r.place || r.content.slice(0,24) || "제목 없는 기록")+(r.place && r.client ? " · "+esc(r.place) : "")+'</span>'+chip+'<small>'+esc(sub)+'</small></button></li>';
-    }).join("")+'</ul>' : '<p class="empty">'+(view.filter==="active" ? "진행 중인 기록이 없습니다." : "입력 완료한 기록이 없습니다.")+'</p>');
+    }).join("")+'</ul>' : (view.filter==="active" && !visibleItems().length ? '<div class="empty"><p style="margin:0 0 10px">아직 기록이 없습니다. 통역이 끝나면 <b>＋ 새 통역 기록</b>을 누르세요.</p><button type="button" id="first-help">사용방법 보기</button></div>' :
+      '<p class="empty">'+(view.filter==="active" ? "진행 중인 기록이 없습니다." : "입력 완료한 기록이 없습니다.")+'</p>'));
 }
 function bindList(){
   $("#new")?.addEventListener("click", () => {
     const item = {rec:blankRecord(), base:null, dirty:false, theirs:null, conflicts:[]};
     S.items.push(item); go("edit", item.rec.id);
   });
+  $("#first-help")?.addEventListener("click", () => go("help"));
   document.querySelectorAll("[data-filter]").forEach(b => b.onclick = () => { view.filter = b.dataset.filter; render(false); });
   document.querySelectorAll("[data-owner]").forEach(b => b.onclick = () => { view.owner = b.dataset.owner; render(false); });
   document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => {
@@ -716,6 +725,59 @@ function bindAdmin(){
   document.querySelectorAll("[data-active]").forEach(b => b.onclick = () => { const on = b.dataset.on === "1"; if (on || confirm(b.dataset.active+"님의 사용을 중지할까요? 그 기기에서는 더 이상 저장할 수 없습니다.")) adminCall({action:"setActive", name:b.dataset.active, active:on}); });
 }
 
+/* ---------- help ---------- */
+let helpBack = "list";
+const HELP = [
+  ["start", "처음 시작하기", '<ol><li>관리자에게 받은 <b>연결 링크</b>를 누릅니다. 카카오톡에서 누르면 크롬·사파리로 다시 열립니다.</li>'+
+    '<li><b>갤럭시</b>: <b>앱 설치</b>를 누릅니다. 설치 단추가 없으면 크롬 ⋮ 메뉴 → <b>홈 화면에 추가</b>.</li>'+
+    '<li><b>아이폰</b>: 사파리 <b>공유 단추 → 홈 화면에 추가</b>. 홈 화면 아이콘을 처음 열 때 링크와 함께 받은 <b>8자리 연결 코드</b>를 입력합니다.</li>'+
+    '<li>그다음부터는 홈 화면의 <b>통역일지</b> 아이콘으로 엽니다.</li></ol>'],
+  ["field", "현장에서 기록하기", '<ol><li><b>＋ 새 통역 기록</b>을 누릅니다.</li>'+
+    '<li>시작·종료는 <b>지금</b> 단추로 넣고, 장소·의뢰인·분류·의뢰방법·통역내용부터 적습니다. 나머지는 나중에 채워도 됩니다.</li>'+
+    '<li>적는 대로 <b>자동 저장</b>됩니다. 따로 저장 단추를 누르지 않아도 됩니다.</li>'+
+    '<li>맨 위 노란 띠에 <b>남은 항목</b>이 보입니다. 누르면 그 칸으로 이동합니다.</li>'+
+    '<li>같은 의뢰인·장소가 반복되면 <b>이전 기록에서 불러오기</b>를 쓰세요. 날짜·시간·내용·결과만 새로 적으면 됩니다.</li>'+
+    '<li>결과가 아직 정해지지 않았으면 <b>결과 미확정</b>에 체크합니다.</li>'+
+    '<li>새벽·오전·오후·저녁 분은 기존 통역일지가 자동 계산하므로 입력하지 않습니다.</li></ol>'],
+  ["status", "표시의 뜻", '<dl class="copy">'+
+    '<div><dt>작성 중</dt><dd>필수 항목이 남아 있습니다.</dd><span></span></div>'+
+    '<div><dt>입력 대기</dt><dd>모두 채웠습니다. 사무실에서 기존 통역일지에 입력할 차례입니다.</dd><span></span></div>'+
+    '<div><dt>입력 완료</dt><dd>기존 통역일지에 등록을 마쳤습니다.</dd><span></span></div>'+
+    '<div><dt>수정 반영 필요</dt><dd>입력 완료 뒤 내용이 바뀌었습니다. 기존 통역일지의 해당 건도 고쳐 주세요.</dd><span></span></div>'+
+    '<div><dt>비교 필요</dt><dd>두 기기에서 같은 칸을 다르게 고쳤습니다. 기록을 열어 남길 내용을 고르세요.</dd><span></span></div>'+
+    '<div><dt>모두 저장됨</dt><dd>센터 구글 시트에 저장되었습니다.</dd><span></span></div>'+
+    '<div><dt>보낼 기록 N건</dt><dd>인터넷이 없어 휴대폰에 보관 중입니다. 연결되면 자동으로 보냅니다.</dd><span></span></div></dl>'],
+  ["pc", "사무실 PC에서 기존 통역일지에 입력하기", '<p><b>처음 한 번</b></p><ol><li>PC의 엣지·크롬에서 이 앱 주소를 열고 연결합니다(본인 링크 또는 연결 코드).</li>'+
+    '<li><b>설정</b> → 노란 <b>통역일지 채우기</b> 단추를 즐겨찾기 막대로 끌어다 놓습니다. 즐겨찾기 막대는 <b>Ctrl+Shift+B</b>로 켭니다.</li>'+
+    '<li>같은 브라우저에서 협회 통역일지 사이트에 로그인해 둡니다.</li></ol>'+
+    '<p><b>매번</b></p><ol><li>목록에서 <b>입력 대기</b> 기록을 누릅니다.</li>'+
+    '<li><b>입력값 복사하고 등록 화면 열기</b>를 누릅니다.</li>'+
+    '<li>열린 등록 화면에서 즐겨찾기 <b>통역일지 채우기</b>를 누르고 <b>Ctrl+V</b>.</li>'+
+    '<li>노란 칸을 확인하고, 의뢰인·참석자를 기존 화면에서 선택한 뒤 <b>등록</b>을 직접 누릅니다.</li>'+
+    '<li>앱으로 돌아와 <b>등록 완료로 표시</b>를 누릅니다.</li></ol>'+
+    '<p class="muted">채우기 단추가 보이지 않으면 브라우저 창을 크게 띄우세요. 좁은 창에서는 휴대폰 화면으로 바뀝니다.</p>'],
+  ["offline", "인터넷이 없을 때", '<p>인터넷이 없어도 홈 화면 아이콘으로 열어 기록할 수 있습니다. 기록은 휴대폰에 보관되었다가 인터넷(데이터·와이파이)이 연결되면 자동으로 센터에 저장됩니다. 화면 위에 <b>모두 저장됨</b>이 보이면 끝난 것입니다.</p>'+
+    '<p class="muted">처음 연결할 때는 인터넷이 필요합니다. 휴대폰의 <b>사생활 보호(시크릿) 모드</b>에서는 쓰지 마세요.</p>'],
+  ["edit", "고치기 · 삭제", '<ul><li>목록에서 기록을 누르고 <b>수정</b>을 누릅니다.</li>'+
+    '<li>삭제는 기록 화면 아래 <b>이 기록 삭제</b>. 기존 통역일지의 등록 건은 그대로 남으니 필요하면 그쪽에서 따로 지웁니다.</li>'+
+    '<li>휴대폰을 바꾸거나 다른 사람이 쓸 때는 <b>설정 → 연결 해제</b>.</li></ul>'],
+  ["admin", "관리자: 통역사 추가와 연결 관리", '<ul><li>위쪽 <b>관리</b> → 이름 입력 → <b>추가</b>.</li>'+
+    '<li><b>링크 보내기</b>로 카카오톡·문자에 보냅니다. PC에서는 복사됩니다. <b>QR</b>을 눌러 화면을 찍게 해도 됩니다.</li>'+
+    '<li>휴대폰 분실·링크 잘못 보냄: <b>코드 다시 만들기</b>(기존 연결 해제). 퇴사: <b>사용 중지</b>.</li>'+
+    '<li>모든 기록은 센터 구글 계정의 <b>통역일지 기록</b> 시트에 있습니다.</li></ul>'],
+  ["privacy", "개인정보 주의", '<ul><li>연결 링크와 코드는 비밀번호처럼 본인만 사용하세요.</li>'+
+    '<li>의뢰인은 기존 시스템에서 찾을 수 있을 만큼(이름)만 적고, 연락처·주소는 적지 마세요.</li>'+
+    '<li>휴대폰 화면 잠금을 사용하세요. 공용 PC에서는 쓰고 나서 <b>연결 해제</b>하세요.</li></ul>']
+];
+function main_help(){
+  const open = wide() ? "pc" : (S.settings.token ? "field" : "start");
+  $("#main").innerHTML = '<section class="panel" style="max-width:760px;margin:auto"><h2 tabindex="-1">사용방법</h2>'+
+    HELP.filter(([id]) => id !== "admin" || isAdmin()).map(([id,title,body]) => '<details class="help"'+(id === open ? " open" : "")+'><summary>'+title+'</summary><div>'+body+'</div></details>').join("")+
+    '<div class="actions"><button type="button" class="primary" id="help-back">돌아가기</button></div></section>';
+  $("#help-back").onclick = () => { const back = helpBack; helpBack = "list"; go(S.settings.token ? (back === "join" ? "list" : back) : "join"); };
+  $("h2", $("#main")).focus();
+}
+
 /* ---------- settings ---------- */
 function settingsHTML(){
   return '<section class="panel"><h2 tabindex="-1">설정</h2>'+
@@ -723,6 +785,7 @@ function settingsHTML(){
     '<form id="st"><label style="display:flex;gap:8px;align-items:center;min-height:44px"><input type="checkbox" name="defaultMethod" style="width:22px;height:22px"'+(S.settings.defaultMethod ? " checked" : "")+'>새 기록의 통역방법을 ‘수어,음성통역’으로 미리 선택</label>'+
     '<label style="display:flex;gap:8px;align-items:center;min-height:44px"><input type="checkbox" name="defaultTargets" style="width:22px;height:22px"'+(S.settings.defaultTargets ? " checked" : "")+'>새 기록의 통역대상을 ‘농인·청인’으로 미리 선택</label>'+
     '<div class="actions"><button class="primary" type="submit">저장</button><button type="button" class="ghost" id="st-back">돌아가기</button></div></form>'+
+    '<div class="actions"><button type="button" id="st-help">사용방법 보기</button></div>'+
     '<p class="'+(offlineReady ? "okbox" : "note")+'">'+(offlineReady ? "인터넷 없는 곳에서도 열 수 있도록 준비되었습니다." : "오프라인 사용 준비 중입니다. 인터넷이 연결된 곳에서 한 번 더 열어 주세요.")+'</p>'+
     (!standalone() && !wide() ? '<div class="actions"><button type="button" id="st-install">홈 화면에 추가하는 방법</button></div>' : "")+
     '</section>'+
@@ -736,6 +799,7 @@ function bindSettings(){
   const form = $("#st");
   form.onsubmit = e => { e.preventDefault(); S.settings.defaultMethod = form.defaultMethod.checked; S.settings.defaultTargets = form.defaultTargets.checked; persist(); toast("저장했습니다."); go("list"); };
   $("#st-back").onclick = () => go("list");
+  $("#st-help").onclick = () => { helpBack = "settings"; go("help"); };
   $("#st-install")?.addEventListener("click", () => go("install"));
   const bm = $("#bm"); if (bm) { bm.href = "javascript:" + encodeURIComponent(FILLER.toString().replace(/^function FILLER\(\)\s*\{|\}$/g, "").replace(/\n\s*/g, "\n")); bm.onclick = e => { e.preventDefault(); toast("즐겨찾기 막대로 끌어다 놓으세요."); }; }
   $("#logout").onclick = () => {
@@ -887,6 +951,7 @@ function drawQR(canvas, text){
 
 /* ---------- start ---------- */
 $("#settings-btn").onclick = () => go("settings");
+$("#help-btn").onclick = () => { helpBack = ["list","detail","edit","settings","admin","join"].includes(view.name) ? (view.name === "edit" || view.name === "detail" ? "list" : view.name) : "list"; go("help"); };
 $("#admin-btn").onclick = () => { adminUsers = null; adminMsg = ""; go("admin"); };
 load(); persist();
 addEventListener("resize", () => { if (wide() !== lastWide) { lastWide = wide(); if (view.name !== "edit") render(false); } });
