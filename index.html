@@ -1,0 +1,907 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#152e5d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="통역일지"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="referrer" content="no-referrer">
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
+<title>통역일지</title>
+<style>
+:root{color-scheme:light;--ink:#172847;--muted:#55657e;--line:#dbe2ed;--bg:#f3f5f9;--paper:#fff;--blue:#184bad;--pale:#e9effd;--green:#11634d;--amber:#fff3d9;--amber-ink:#674207;--red:#a02424}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 'Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif;padding-bottom:env(safe-area-inset-bottom)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);border-radius:10px;padding:8px 13px;min-height:44px;background:#fff;font-weight:650}
+button.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+button.ghost{background:transparent;border-color:transparent;color:var(--blue)}
+button.danger{color:var(--red)}
+button:disabled{opacity:.5;cursor:default}
+:focus-visible{outline:3px solid #3e76df;outline-offset:2px}
+header{position:sticky;top:0;z-index:5;background:#152e5d;color:#fff}
+.bar{max-width:1180px;margin:auto;padding:10px 14px;display:flex;align-items:center;gap:10px;min-height:56px}
+.bar h1{font-size:19px;margin:0;flex:1;letter-spacing:-.03em}
+.bar button{background:transparent;color:#fff;border-color:#ffffff55;min-height:40px;padding:6px 11px;font-size:14px}
+.sync{font-size:13px;color:#cfe0ff;white-space:nowrap}
+.sync.warn{color:#ffd98a}
+main{max-width:1180px;margin:auto;padding:12px}
+.layout{display:grid;gap:14px}
+@media(min-width:900px){.layout.split{grid-template-columns:minmax(300px,380px) 1fr;align-items:start}}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:16px}
+.panel h2{font-size:19px;margin:0 0 8px;letter-spacing:-.03em}
+.panel h3{font-size:16px;margin:18px 0 8px}
+.muted{color:var(--muted);font-size:14px}
+.note{background:var(--amber);color:var(--amber-ink);border-radius:10px;padding:9px 12px;font-size:14px;margin:8px 0}
+.okbox{background:#e2f4ec;color:var(--green);border-radius:10px;padding:9px 12px;font-size:14px;margin:8px 0}
+.big{width:100%;font-size:18px;min-height:54px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.tabs button{font-size:14px;padding:6px 10px;min-height:40px}
+.tabs button[aria-pressed=true]{background:var(--pale);border-color:#9cb9ee;color:#153d91}
+ul.list{list-style:none;margin:0;padding:0}ul.list li+li{margin-top:8px}
+.item{width:100%;text-align:left;display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:10px 12px}
+.item[aria-current=true]{border-color:var(--blue);background:var(--pale)}
+.item small{grid-column:1/-1;color:var(--muted);font-size:13px;font-weight:500}
+.chip{font-size:12px;border-radius:20px;background:#eef1f6;color:#364661;padding:2px 8px;white-space:nowrap;font-weight:700;align-self:start}
+.chip.ready{background:#e6eefc;color:#194486}.chip.done{background:#def4e9;color:var(--green)}.chip.warn{background:var(--amber);color:var(--amber-ink)}
+.empty{padding:22px 12px;border:1px dashed var(--line);border-radius:12px;text-align:center;color:var(--muted)}
+label.f{display:block;font-weight:700;font-size:14px;margin-top:12px}
+.f input,.f textarea,.f select,input.f{display:block;width:100%;margin-top:5px;padding:10px;min-height:46px;border:1px solid #c5d0e1;border-radius:10px;background:#fff;font-size:16px}
+textarea{resize:vertical;min-height:96px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.time{display:flex;gap:6px;margin-top:5px}.time input{flex:1;min-width:0;margin:0!important}.time button{padding:6px 10px;font-size:14px}
+fieldset{border:0;padding:0;margin:14px 0 0;min-width:0}legend{font-weight:700;font-size:14px;padding:0;margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chips button{min-height:44px;padding:6px 12px;font-weight:600;font-size:15px}
+.chips button[aria-pressed=true]{background:var(--blue);color:#fff;border-color:var(--blue)}
+.chips button.suggest{border-color:#e0a73a;box-shadow:inset 0 0 0 1px #e0a73a}
+.chips.small button{min-height:36px;font-size:13px;padding:4px 10px;font-weight:500}
+legend.req::after{content:" *";color:var(--red)}
+.calc{font-size:14px;color:var(--muted);margin-top:6px}
+.counter{font-size:13px;color:var(--muted);text-align:right}.counter.over{color:var(--red);font-weight:700}
+.sticky-top{position:sticky;top:56px;z-index:4;margin:-4px 0 10px}
+.missing{display:block;width:100%;text-align:left;background:var(--amber);color:var(--amber-ink);border-color:#f0d49a;font-size:14px}
+.complete{background:#e2f4ec;color:var(--green);border-radius:10px;padding:10px 12px;font-size:14px;font-weight:700}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px}
+.bottom{position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg) 30%);padding:14px 0 calc(8px + env(safe-area-inset-bottom));z-index:3}
+dl.copy{margin:10px 0 0}dl.copy>div{display:grid;grid-template-columns:150px 1fr auto;gap:8px;align-items:start;padding:8px 0;border-bottom:1px solid var(--line)}
+dl.copy dt{font-size:14px;color:var(--muted);font-weight:700}dl.copy dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+dl.copy button{min-height:36px;padding:4px 10px;font-size:13px}
+@media(max-width:560px){dl.copy>div{grid-template-columns:1fr auto}dl.copy dt{grid-column:1/-1}}
+.steps{counter-reset:s;list-style:none;padding:0;margin:8px 0}.steps>li{counter-increment:s;position:relative;padding:6px 0 10px 38px}
+.steps>li::before{content:counter(s);position:absolute;left:0;top:6px;width:27px;height:27px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:800;font-size:14px}
+.bm{display:inline-block;padding:9px 14px;border-radius:10px;background:#fff7d6;border:2px dashed #d39b19;color:#5b3d00;font-weight:800;text-decoration:none;cursor:grab}
+.qr{display:block;width:180px;height:180px;image-rendering:pixelated;border:8px solid #fff;background:#fff}
+.code{font-size:28px;font-weight:800;letter-spacing:.18em}
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#152e5d;color:#fff;padding:10px 16px;border-radius:10px;z-index:20;max-width:calc(100% - 24px);box-shadow:0 6px 20px #0003}
+.toast:empty{display:none}
+.diff{border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:10px}
+.diff label{display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:14px}
+.diff input{width:20px;height:20px;margin-top:2px}
+[hidden]{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+<script src="config.js"></script>
+</head>
+<body>
+<header><div class="bar"><h1 id="title">통역일지</h1><span class="sync" id="sync" role="status" aria-live="polite"></span><button type="button" id="admin-btn" hidden>관리</button><button type="button" id="settings-btn" hidden>설정</button></div></header>
+<main id="main"></main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+"use strict";
+const FORM_URL = "http://www.kbdeaf.or.kr/trans_admin/trans_form.php?doc_type=R&sel_grp_code=";
+const STORE_KEY = "ksl-journal-v3";
+const SCRIPT_URL = ((window.KSL_CONFIG || {}).scriptUrl || "").trim();
+const OPT = {
+  division:["출장","내방","전화"],
+  request:["인터넷","문자","영상전화","전화","내방","기타"],
+  targets:["농인","문맹농인","청인","기타"],
+  method:["수어,음성통역","중계통역","기타"],
+  area:["행사통역","법률통역","교육통역","의료통역","방송통역","관공서통역","일상생활통역","취업알선통역","기타"]
+};
+const FIELDS = ["interpreter","date","start","end","place","program","division","request","targets","method","area","client","content","result","pendingResult","deafNames","hearingNames"];
+const LABEL = {interpreter:"수어통역사",date:"수어통역일",start:"시작 시각",end:"종료 시각",place:"수어통역장소",program:"프로그램명",division:"분류",request:"수어통역의뢰방법",targets:"수어통역대상",method:"수어통역방법",area:"수어통역영역",client:"의뢰인",content:"수어통역내용",result:"결과",pendingResult:"결과 미확정",deafNames:"참석인원(농인)",hearingNames:"참석인원(청인)",status:"상태"};
+const STATUS = {draft:"작성 중",ready:"입력 대기",done:"입력 완료"};
+const LIMIT = {place:40,result:200,interpreter:20,client:14};
+const AREA_HINTS = [
+  ["의료통역",/진료|검사|처방|복약|입원|퇴원|수술|치료|병원|치과|한의원|약국|보건소|의사|간호/],
+  ["법률통역",/경찰|법원|검찰|조사|재판|변호|고소|소송|공증/],
+  ["관공서통역",/주민센터|행정복지센터|시청|구청|군청|민원|세무서|고용센터|연금공단|건강보험|관공서/],
+  ["교육통역",/학교|수업|강의|교육|연수|학원|세미나/],
+  ["취업알선통역",/면접|취업|채용|구직|직업상담/],
+  ["행사통역",/행사|기념식|대회|축제|총회|발대식/],
+  ["방송통역",/방송|촬영|인터뷰|녹화/]
+];
+
+/* ---------- small utilities ---------- */
+const $ = (sel, root=document) => root.querySelector(sel);
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]);
+const nowIso = () => new Date().toISOString();
+const rand = () => { try { const a = new Uint8Array(12); crypto.getRandomValues(a); return [...a].map(b => b.toString(16).padStart(2,"0")).join(""); } catch { return Math.random().toString(16).slice(2) + Date.now().toString(16); } };
+const makeId = () => "r-" + Date.now().toString(36) + "-" + rand().slice(0,12);
+const makeRev = () => Date.now().toString(36) + "-" + rand().slice(0,10);
+const koreaDate = (d=new Date()) => new Intl.DateTimeFormat("sv-SE",{timeZone:"Asia/Seoul",year:"numeric",month:"2-digit",day:"2-digit"}).format(d);
+const koreaTime = (d=new Date()) => new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Seoul",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).format(d);
+const clone = v => v == null ? v : JSON.parse(JSON.stringify(v));
+const same = (a,b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+const wide = () => matchMedia("(min-width:900px)").matches;
+
+function toMin(t){ const m=/^([01]\d|2[0-3]):([0-5]\d)$/.exec(t||""); return m ? +m[1]*60 + +m[2] : null; }
+/* Same rule as the existing system: 새벽 0-7, 오전 7-12, 오후 12-18, 저녁 18-24; end earlier than start = next day. */
+function timeInfo(r){
+  const s = toMin(r.start), e = toMin(r.end);
+  if (s === null || e === null || s === e) return null;
+  const cuts=[0,420,720,1080,1440];
+  const seg=(a,b)=>cuts.slice(0,4).map((c,i)=>Math.max(0,Math.min(b,cuts[i+1])-Math.max(a,c)));
+  const overnight = e < s;
+  const bands = overnight ? seg(s,1440).map((v,i)=>v+seg(0,e)[i]) : seg(s,e);
+  return {total: overnight ? 1440-s+e : e-s, overnight, bands};
+}
+function weekday(date){
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date||"")) return "";
+  const d = new Date(date+"T00:00:00Z"); if (isNaN(d) || d.toISOString().slice(0,10)!==date) return "";
+  return "일월화수목금토"[d.getUTCDay()];
+}
+function suggestArea(r){
+  const text = [r.place,r.content,r.program].join(" ");
+  for (const [area,re] of AREA_HINTS) if (re.test(text)) return area;
+  return "";
+}
+
+/* ---------- record model ---------- */
+function blankRecord(){
+  return {id:makeId(), owner:S.settings.name, status:"draft", interpreter:S.settings.name, date:koreaDate(), start:"", end:"",
+    place:"", program:"", division:"", request:"", targets:S.settings.defaultTargets === false ? [] : ["농인","청인"], method:S.settings.defaultMethod === false ? "" : "수어,음성통역", area:"",
+    client:"", content:"", result:"", pendingResult:false, deafNames:"", hearingNames:"", needsCorrection:false,
+    created:nowIso(), updated:nowIso(), rev:""};
+}
+function normalize(v){
+  if (!v || typeof v !== "object" || typeof v.id !== "string" || !/^[A-Za-z0-9-]{5,80}$/.test(v.id)) return null;
+  const r = blankRecordShape();
+  for (const k of Object.keys(r)) if (typeof r[k] === typeof v[k]) r[k] = v[k];
+  r.id = v.id;
+  for (const k of ["division","request","method","area"]) if (r[k] && !OPT[k].includes(r[k])) r[k] = "";
+  r.targets = OPT.targets.filter(t => Array.isArray(v.targets) && v.targets.includes(t));
+  if (!["draft","ready","done","deleted"].includes(r.status)) r.status = "draft";
+  for (const k of Object.keys(r)) if (typeof r[k] === "string") r[k] = r[k].slice(0,4000);
+  return r;
+}
+function blankRecordShape(){ return {id:"",owner:"",status:"draft",interpreter:"",date:"",start:"",end:"",place:"",program:"",division:"",request:"",targets:[],method:"",area:"",client:"",content:"",result:"",pendingResult:false,deafNames:"",hearingNames:"",needsCorrection:false,created:"",updated:"",rev:""}; }
+function missing(r){
+  const m = [];
+  if (!r.interpreter.trim()) m.push(["interpreter","수어통역사"]);
+  if (!weekday(r.date)) m.push(["date","수어통역일"]);
+  if (!timeInfo(r)) m.push(["start","시작·종료 시각"]);
+  if (!r.place.trim()) m.push(["place","장소"]);
+  if (!r.client.trim()) m.push(["client","의뢰인"]);
+  if (!r.division) m.push(["division","분류"]);
+  if (!r.request) m.push(["request","의뢰방법"]);
+  if (!r.area) m.push(["area","통역영역"]);
+  if (!r.targets.length) m.push(["targets","통역대상"]);
+  if (!r.method) m.push(["method","통역방법"]);
+  if (!r.content.trim()) m.push(["content","통역내용"]);
+  if (!r.result.trim() && !r.pendingResult) m.push(["result","결과"]);
+  return m;
+}
+function warnings(r){
+  const w = [];
+  if (r.place.length > LIMIT.place) w.push("장소가 "+LIMIT.place+"자를 넘습니다 (기존 시스템 제한)");
+  if (r.result.length > LIMIT.result) w.push("결과가 "+LIMIT.result+"자를 넘습니다 (기존 시스템 제한)");
+  if (r.interpreter.length > LIMIT.interpreter) w.push("통역사 이름이 너무 깁니다");
+  if (r.pendingResult) w.push("결과 미확정");
+  const t = timeInfo(r); if (t && t.overnight) w.push("다음 날 종료 (자정 넘김)");
+  return w;
+}
+
+/* ---------- three-way merge (base = last copy both sides agreed on) ---------- */
+const RANK = {draft:0,ready:1,done:2,deleted:3};
+function merge3(base, mine, theirs){
+  const merged = {...theirs}; const conflicts = [];
+  for (const k of FIELDS) {
+    const b = base ? base[k] : undefined, m = mine[k], t = theirs[k];
+    if (same(m,t)) continue;
+    if (base && same(t,b)) { merged[k] = clone(m); continue; }
+    if (base && same(m,b)) continue;
+    conflicts.push(k); merged[k] = clone(m);
+  }
+  const bs = base ? base.status : null;
+  if (mine.status === "deleted" || theirs.status === "deleted") {
+    if (mine.status === "deleted" && theirs.status === "deleted") merged.status = "deleted";
+    else if (mine.status === "deleted" && (!base || FIELDS.every(k => same(theirs[k], base[k])))) merged.status = "deleted";
+    else if (theirs.status === "deleted" && (!base || FIELDS.every(k => same(mine[k], base[k])))) merged.status = "deleted";
+    else { merged.status = mine.status === "deleted" ? theirs.status : mine.status; if (!conflicts.includes("status")) conflicts.push("status"); }
+  } else if (mine.status !== theirs.status) {
+    if (bs === theirs.status) merged.status = mine.status;
+    else if (bs === mine.status) merged.status = theirs.status;
+    else merged.status = RANK[mine.status] > RANK[theirs.status] ? mine.status : theirs.status;
+  }
+  merged.needsCorrection = !!(theirs.needsCorrection || mine.needsCorrection);
+  if (base && base.needsCorrection) merged.needsCorrection = !!(theirs.needsCorrection && mine.needsCorrection);
+  if (merged.status === "done" && theirs.status === "done" && FIELDS.some(k => !same(merged[k], theirs[k]))) merged.needsCorrection = true;
+  if (merged.status !== "done") merged.needsCorrection = false;
+  merged.updated = mine.updated > theirs.updated ? mine.updated : theirs.updated;
+  merged.rev = theirs.rev;
+  return {merged, conflicts};
+}
+
+/* ---------- local store ---------- */
+const S = {settings:{token:"", name:"", role:"", defaultMethod:true, defaultTargets:true}, items:[], lastSync:""};
+let storageOk = true;
+const isAdmin = () => S.settings.role === "admin";
+function load(){
+  try {
+    const raw = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
+    if (raw && typeof raw === "object") {
+      const st = raw.settings || {};
+      Object.assign(S.settings, {token: typeof st.token === "string" ? st.token : "", name: String(st.name || "").slice(0,20), role: st.role === "admin" ? "admin" : (st.role ? "interpreter" : ""),
+        defaultMethod: st.defaultMethod !== false, defaultTargets: st.defaultTargets !== false});
+      if (Array.isArray(raw.items)) S.items = raw.items.map(it => ({rec:normalize(it.rec), base:it.base ? normalize(it.base) : null, dirty:!!it.dirty, theirs: it.theirs ? normalize(it.theirs) : null, conflicts: Array.isArray(it.conflicts) ? it.conflicts.filter(f => FIELDS.includes(f) || f === "status") : []})).filter(it => it.rec);
+      S.lastSync = typeof raw.lastSync === "string" ? raw.lastSync : "";
+    }
+  } catch { storageOk = false; }
+}
+function persist(){
+  try { localStorage.setItem(STORE_KEY, JSON.stringify({settings:S.settings, items:S.items, lastSync:S.lastSync})); storageOk = true; }
+  catch { storageOk = false; }
+  return storageOk;
+}
+const findItem = id => S.items.find(it => it.rec.id === id);
+function visibleItems(){ return S.items.filter(it => it.rec.status !== "deleted"); }
+/* Save edits: status follows completeness; edits after 입력 완료 flag a correction. */
+function commit(item, changes){
+  const before = item.rec;
+  const next = {...before, ...changes};
+  const dataChanged = FIELDS.some(k => !same(before[k], next[k]));
+  if (!dataChanged && !("status" in changes) && !("needsCorrection" in changes)) return false;
+  if (!("status" in changes) && next.status !== "done") next.status = missing(next).length ? "draft" : "ready";
+  if (before.status === "done" && next.status === "done" && dataChanged) next.needsCorrection = true;
+  next.updated = nowIso();
+  item.rec = next; item.dirty = true;
+  persist(); scheduleSync(1500);
+  return true;
+}
+
+/* ---------- sync with the center Google Sheet ---------- */
+let net = {ok:null, error:""};
+let syncing = false, syncTimer = null, syncAgain = false;
+async function api(body, timeout=25000){
+  if (!SCRIPT_URL) throw new Error("config");
+  const ctrl = new AbortController(); const timer = setTimeout(() => ctrl.abort(), timeout);
+  try {
+    const res = await fetch(SCRIPT_URL, {method:"POST", body:JSON.stringify(body), redirect:"follow", signal:ctrl.signal});
+    if (!res.ok) throw new Error("http " + res.status);
+    return await res.json();
+  } finally { clearTimeout(timer); }
+}
+function scheduleSync(delay){ clearTimeout(syncTimer); syncTimer = setTimeout(syncNow, delay); }
+const signature = () => JSON.stringify(S.items.map(i => [i.rec.id, i.rec.rev, i.rec.status, i.rec.needsCorrection, i.dirty, !!i.theirs]));
+function signedOut(message){
+  S.settings.token = ""; persist();
+  view.name = "join"; view.message = message; render(false);
+}
+async function syncNow(){
+  if (!S.settings.token) return;
+  if (syncing) { syncAgain = true; return; }
+  syncing = true; syncAgain = false; renderSync("저장 중…");
+  const before = signature();
+  try {
+    const sending = S.items.filter(it => it.dirty && !it.theirs).slice(0, 100).map(it => ({it, snap:clone(it.rec), baseRev: it.base ? it.base.rev : ""}));
+    const known = {}; for (const it of S.items) if (it.base) known[it.rec.id] = it.base.rev;
+    const res = await api({action:"sync", token:S.settings.token, changes:sending.map(x => ({rec:x.snap, baseRev:x.baseRev})), known});
+    if (res.error === "auth") { signedOut("연결이 해제되었습니다. 관리자에게 새 링크를 받아 주세요."); return; }
+    if (!res.ok) throw new Error(res.error || "server");
+    if (res.me) { S.settings.name = res.me.name; S.settings.role = res.me.role; }
+    let again = false;
+    for (const {it, snap} of sending) {
+      const r = (res.results || []).find(x => x.id === snap.id);
+      if (!r) continue;
+      if (r.ok) {
+        const sent = normalize({...snap, rev:r.rev, owner: isAdmin() ? snap.owner : S.settings.name});
+        it.base = sent;
+        if (same({...it.rec, rev:""}, {...snap, rev:""})) { it.rec = clone(sent); it.dirty = false; } else it.rec.rev = r.rev;
+        if (it.rec.status === "deleted" && !it.dirty) S.items = S.items.filter(x => x !== it);
+      } else if (r.conflict) {
+        const theirs = normalize(r.theirs);
+        if (!theirs) { it.base = null; again = true; continue; }
+        const {merged, conflicts} = merge3(it.base, it.rec, theirs);
+        if (conflicts.length) { it.theirs = theirs; it.conflicts = conflicts; }
+        else { it.rec = merged; it.base = theirs; again = true; }
+      } else if (r.error) { it.error = r.error; }
+    }
+    for (const raw of res.updates || []) {
+      const rec = normalize(raw); if (!rec) continue;
+      const local = findItem(rec.id);
+      if (local && (local.dirty || local.theirs || (local.base && local.base.rev === rec.rev))) continue;
+      if (rec.status === "deleted") { if (local) S.items = S.items.filter(x => x !== local); continue; }
+      if (local) { local.rec = clone(rec); local.base = rec; }
+      else S.items.push({rec:clone(rec), base:rec, dirty:false, theirs:null, conflicts:[]});
+    }
+    S.lastSync = nowIso(); net = {ok:true, error:""};
+    if (again) syncAgain = true;
+  } catch (e) {
+    net = {ok:false, error: e && e.message === "config" ? "config" : "offline"};
+  } finally {
+    syncing = false; persist(); renderSync();
+    if (!["edit","settings","admin","join","install"].includes(view.name) && signature() !== before) render(false);
+    if (syncAgain && net.ok) scheduleSync(300);
+    else scheduleSync(net.ok ? 60000 : 30000);
+  }
+}
+function pendingCount(){ return S.items.filter(it => it.dirty).length; }
+function renderSync(text){
+  const el = $("#sync"); if (!el) return;
+  if (!S.settings.token) { el.textContent = ""; return; }
+  if (text) { el.textContent = text; el.className = "sync"; return; }
+  const p = pendingCount(), c = S.items.filter(it => it.theirs).length;
+  let msg, warn = true;
+  if (net.error === "config") msg = "설정 필요";
+  else if (c) msg = "비교 필요 " + c + "건";
+  else if (p && net.ok === false) msg = "보낼 기록 " + p + "건 · 연결되면 자동 전송";
+  else if (p) msg = "저장 대기 " + p + "건";
+  else if (net.ok === false) msg = "오프라인 · 기록 가능";
+  else { msg = "모두 저장됨"; warn = false; }
+  el.textContent = msg; el.className = "sync" + (warn ? " warn" : "");
+}
+
+/* ---------- joining with a link or code ---------- */
+let lastCode = "";
+async function join(code){
+  const res = await api({action:"join", code});
+  if (res.error === "locked") throw new Error("잠시 뒤 다시 시도하세요.");
+  if (!res.ok) throw new Error("연결 코드가 맞지 않습니다. 관리자에게 확인하세요.");
+  const changedUser = S.settings.name && S.settings.name !== res.me.name;
+  if (changedUser) S.items = S.items.filter(it => it.dirty);
+  S.settings.token = res.token; S.settings.name = res.me.name; S.settings.role = res.me.role;
+  lastCode = code; persist();
+}
+const standalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+let installPrompt = null;
+addEventListener("beforeinstallprompt", e => { e.preventDefault(); installPrompt = e; if (view.name === "install") render(false); });
+const inviteLink = code => location.origin + location.pathname.replace(/index\.html$/, "") + "#c=" + code;
+
+/* ---------- UI state ---------- */
+let view = {name:"list", id:null, filter:"active", owner:"mine", message:""};
+let editClick = null, lastWide = wide();
+let toastTimer;
+function toast(msg){ clearTimeout(toastTimer); $("#toast").textContent = msg; toastTimer = setTimeout(() => $("#toast").textContent = "", 4500); }
+function go(name, id=null){ view.name = name; view.id = id; render(true); scrollTo(0,0); }
+
+function render(focus){
+  if (editClick) { $("#main").removeEventListener("click", editClick); editClick = null; }
+  renderSync();
+  $("#admin-btn").hidden = !(S.settings.token && isAdmin());
+  $("#settings-btn").hidden = !S.settings.token;
+  const main = $("#main");
+  if (!SCRIPT_URL) { main.innerHTML = '<section class="panel"><h2>설정이 필요합니다</h2><p>config.js에 구글 연결 주소가 없습니다. 관리자에게 알려 주세요.</p></section>'; return; }
+  if (!S.settings.token || view.name === "join") { main.innerHTML = joinHTML(); bindJoin(); return; }
+  if (view.name === "install") { main.innerHTML = installHTML(); bindInstall(); return; }
+  if (view.name === "settings") { main.innerHTML = settingsHTML(); bindSettings(); return; }
+  if (view.name === "admin" && isAdmin()) { main.innerHTML = adminHTML(); bindAdmin(); return; }
+  const item = view.id ? findItem(view.id) : null;
+  if ((view.name === "edit" || view.name === "detail") && !item) view.name = "list";
+  if (view.name === "edit") { main.innerHTML = editHTML(item); bindEdit(item); if (focus) $("h2", main)?.focus(); return; }
+  if (!["list","detail"].includes(view.name)) view.name = "list";
+  main.innerHTML = '<div class="layout'+(wide() ? " split" : "")+'">'+
+    (wide() || view.name === "list" ? '<section class="panel" aria-labelledby="list-h">'+listHTML()+'</section>' : "")+
+    (view.name === "detail" ? '<section class="panel" aria-labelledby="detail-h">'+detailHTML(item)+'</section>' :
+      wide() ? '<section class="panel">'+homeHTML()+'</section>' : "")+
+  '</div>';
+  bindList(); if (view.name === "detail") bindDetail(item); else if (wide()) bindHome();
+}
+
+/* ---------- join & install screens ---------- */
+function joinHTML(){
+  return '<section class="panel" style="max-width:520px;margin:auto"><h2 tabindex="-1">통역일지 연결</h2>'+
+    (view.message ? '<p class="note">'+esc(view.message)+'</p>' : "")+
+    '<p>관리자에게 받은 <b>링크를 누르면</b> 자동으로 연결됩니다.</p>'+
+    '<p class="muted">아이폰에서 홈 화면 아이콘으로 처음 열었을 때는 받은 <b>8자리 연결 코드</b>를 한 번 입력하세요.</p>'+
+    '<form id="jf"><label class="f">연결 코드<input name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" pattern="[0-9]*" placeholder="12345678" style="font-size:24px;letter-spacing:.2em;text-align:center"></label>'+
+    '<button class="primary big" style="margin-top:14px" type="submit">연결</button></form><p id="jmsg" class="muted" role="status"></p></section>';
+}
+function bindJoin(){
+  $("#jf").onsubmit = async e => {
+    e.preventDefault();
+    const code = $("#jf").code.value.replace(/\D/g,"");
+    if (code.length !== 8) { $("#jmsg").textContent = "8자리 숫자를 입력하세요."; return; }
+    $("#jmsg").textContent = "연결 중…";
+    try { await join(code); view.message = ""; afterJoin(); }
+    catch (err) { $("#jmsg").textContent = navigator.onLine === false ? "인터넷에 연결된 곳에서 다시 시도하세요." : (err.message.length < 60 ? err.message : "연결하지 못했습니다."); }
+  };
+}
+function afterJoin(){
+  view.name = standalone() || wide() ? "list" : "install"; render(true);
+  toast(S.settings.name + "님으로 연결되었습니다.");
+  syncNow();
+}
+function installHTML(){
+  const ios = isIOS();
+  return '<section class="panel" style="max-width:560px;margin:auto"><h2 tabindex="-1">홈 화면에 추가</h2>'+
+    '<p><b>'+esc(S.settings.name)+'</b>님으로 연결되었습니다. 홈 화면에 아이콘을 만들면 앱처럼 열리고, 인터넷이 없는 곳에서도 쓸 수 있습니다.</p>'+
+    (installPrompt ? '<button type="button" class="primary big" id="install">앱 설치 (한 번 누르기)</button>' :
+     ios ? '<ol class="steps"><li>화면 아래(또는 위) <b>공유 단추</b> <span aria-hidden="true">⬆︎</span> 를 누릅니다.</li><li><b>홈 화면에 추가</b>를 누르고 <b>추가</b>를 누릅니다.</li>'+
+       '<li>홈 화면의 <b>통역일지</b> 아이콘을 처음 열면 연결 코드 <b class="code" style="font-size:20px">'+esc(lastCode || "(받은 코드)")+'</b>를 한 번 입력합니다.</li></ol>' :
+       '<ol class="steps"><li>오른쪽 위 <b>⋮</b> (삼성 인터넷은 아래 <b>≡</b>) 를 누릅니다.</li><li><b>홈 화면에 추가</b> 또는 <b>앱 설치</b>를 누릅니다.</li><li>홈 화면의 <b>통역일지</b> 아이콘으로 여세요.</li></ol>')+
+    '<button type="button" class="ghost big" id="skip" style="margin-top:8px">지금은 이 화면에서 쓰기</button></section>';
+}
+function bindInstall(){
+  $("#install")?.addEventListener("click", async () => { installPrompt.prompt(); const r = await installPrompt.userChoice.catch(() => null); installPrompt = null; if (r && r.outcome === "accepted") toast("설치했습니다. 홈 화면의 통역일지 아이콘으로 여세요."); go("list"); });
+  $("#skip").onclick = () => go("list");
+}
+
+/* ---------- list ---------- */
+function listHTML(){
+  const all = visibleItems().filter(it => view.owner === "all" || !isAdmin() || it.rec.owner === S.settings.name || it.dirty);
+  const groups = {active: all.filter(it => it.rec.status !== "done" || it.rec.needsCorrection || it.theirs), done: all.filter(it => it.rec.status === "done" && !it.rec.needsCorrection && !it.theirs)};
+  const shown = groups[view.filter].sort((a,b) => (b.rec.date+b.rec.start).localeCompare(a.rec.date+a.rec.start) || b.rec.updated.localeCompare(a.rec.updated));
+  const ready = groups.active.filter(it => it.rec.status === "ready").length;
+  return '<h2 id="list-h" tabindex="-1">'+esc(S.settings.name)+'님 기록</h2>'+
+    '<button type="button" class="primary big" id="new">＋ 새 통역 기록</button>'+
+    (storageOk ? "" : '<p class="note">이 브라우저에 저장할 수 없습니다. 사생활 보호 모드인지 확인하세요.</p>')+
+    (isAdmin() ? '<div class="tabs" role="group" aria-label="통역사"><button type="button" data-owner="mine" aria-pressed="'+(view.owner==="mine")+'">내 기록</button><button type="button" data-owner="all" aria-pressed="'+(view.owner==="all")+'">모든 통역사</button></div>' : "")+
+    '<div class="tabs" role="group" aria-label="기록 상태"><button type="button" data-filter="active" aria-pressed="'+(view.filter==="active")+'">진행 중 '+groups.active.length+(ready ? " · 입력 대기 "+ready : "")+'</button><button type="button" data-filter="done" aria-pressed="'+(view.filter==="done")+'">입력 완료 '+groups.done.length+'</button></div>'+
+    (shown.length ? '<ul class="list">'+shown.map(it => {
+      const r = it.rec; const miss = missing(r);
+      const chip = it.theirs ? '<span class="chip warn">비교 필요</span>' : r.needsCorrection ? '<span class="chip warn">수정 반영 필요</span>' :
+        '<span class="chip '+r.status+'">'+STATUS[r.status]+(r.status==="draft" && miss.length ? " · "+(miss.length <= 2 ? miss.map(m => m[1]).join(", ")+" 남음" : miss.length+"개 남음") : "")+'</span>';
+      const sub = [r.date ? r.date.slice(5).replace("-","/")+"("+weekday(r.date)+")" : "", r.start && r.end ? r.start+"~"+r.end : "", r.division, r.area, r.owner !== S.settings.name ? r.owner : "", it.dirty ? "저장 대기" : ""].filter(Boolean).join(" · ");
+      return '<li><button type="button" class="item" data-open="'+esc(r.id)+'" aria-current="'+(view.id===r.id)+'"><span>'+esc(r.client || r.place || r.content.slice(0,24) || "제목 없는 기록")+(r.place && r.client ? " · "+esc(r.place) : "")+'</span>'+chip+'<small>'+esc(sub)+'</small></button></li>';
+    }).join("")+'</ul>' : '<p class="empty">'+(view.filter==="active" ? "진행 중인 기록이 없습니다." : "입력 완료한 기록이 없습니다.")+'</p>');
+}
+function bindList(){
+  $("#new")?.addEventListener("click", () => {
+    const item = {rec:blankRecord(), base:null, dirty:false, theirs:null, conflicts:[]};
+    S.items.push(item); go("edit", item.rec.id);
+  });
+  document.querySelectorAll("[data-filter]").forEach(b => b.onclick = () => { view.filter = b.dataset.filter; render(false); });
+  document.querySelectorAll("[data-owner]").forEach(b => b.onclick = () => { view.owner = b.dataset.owner; render(false); });
+  document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => {
+    const it = findItem(b.dataset.open); if (!it) return;
+    go(it.theirs ? "detail" : (it.rec.status === "draft" && !wide()) ? "edit" : "detail", it.rec.id);
+  });
+}
+
+/* ---------- edit (phone-first single form) ---------- */
+function chipsHTML(key, multi, suggestion){
+  return '<div class="chips" role="group" aria-labelledby="lg-'+key+'">'+OPT[key].map(o =>
+    '<button type="button" data-chip="'+key+'" data-value="'+esc(o)+'" class="'+(suggestion===o ? "suggest" : "")+'" aria-pressed="false">'+esc(o)+(suggestion===o ? " · 추천" : "")+'</button>').join("")+'</div>';
+}
+function recentValues(key, limit=6){
+  const seen = new Set(); const out = [];
+  for (const it of [...S.items].sort((a,b) => b.rec.updated.localeCompare(a.rec.updated))) {
+    if (it.rec.owner !== S.settings.name || it.rec.status === "deleted") continue;
+    const v = (it.rec[key]||"").trim(); if (v && !seen.has(v)) { seen.add(v); out.push(v); }
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+function hasContent(item){ return item.dirty || item.base || item.rec.content || item.rec.place || item.rec.client; }
+function editHTML(item){
+  const r = item.rec; const fresh = !hasContent(item);
+  const recent = S.items.filter(it => it !== item && it.rec.owner === S.settings.name && it.rec.status !== "deleted" && (it.rec.client || it.rec.place)).sort((a,b) => b.rec.updated.localeCompare(a.rec.updated)).slice(0,8);
+  const places = [...new Set(["센터", ...recentValues("place")])].slice(0,7);
+  const clients = recentValues("client");
+  return '<h2 tabindex="-1" class="sr">통역 기록 작성</h2>'+
+  '<div class="sticky-top" id="state"></div>'+
+  (fresh && recent.length ? '<details class="panel" style="margin-bottom:12px"><summary style="font-weight:700;min-height:40px;cursor:pointer">이전 기록에서 불러오기 (같은 의뢰인·장소)</summary><p class="muted">장소·의뢰인·분류·의뢰방법·대상·방법·영역·프로그램명·참석자를 가져옵니다. 날짜·시간·내용·결과는 가져오지 않습니다.</p><div class="chips small">'+
+    recent.map(it => '<button type="button" data-copyfrom="'+esc(it.rec.id)+'">'+esc([it.rec.client, it.rec.place].filter(Boolean).join(" · "))+' <span class="muted">'+esc(it.rec.date.slice(5))+'</span></button>').join("")+'</div></details>' : "")+
+  '<form id="ed" class="panel" autocomplete="off" novalidate>'+
+  '<h3 style="margin-top:0">언제 · 어디서</h3>'+
+  '<div class="row"><label class="f">날짜<input type="date" name="date" value="'+esc(r.date)+'"></label>'+
+  '<label class="f">수어통역사<input name="interpreter" maxlength="20" value="'+esc(r.interpreter)+'"></label></div>'+
+  '<div class="row"><div><label class="f" for="t-start">시작</label><div class="time"><input id="t-start" type="time" name="start" value="'+esc(r.start)+'"><button type="button" data-now="start">지금</button></div></div>'+
+  '<div><label class="f" for="t-end">종료</label><div class="time"><input id="t-end" type="time" name="end" value="'+esc(r.end)+'"><button type="button" data-now="end">지금</button></div></div></div>'+
+  '<p class="calc" id="calc"></p>'+
+  '<label class="f">장소<input name="place" maxlength="80" value="'+esc(r.place)+'"></label>'+
+  '<div class="chips small" style="margin-top:6px">'+places.map(p => '<button type="button" data-set="place" data-value="'+esc(p)+'">'+esc(p)+'</button>').join("")+'</div>'+
+  '<h3>의뢰</h3>'+
+  '<label class="f">의뢰인 <span class="muted">(기존 시스템 검색용 이름)</span><input name="client" maxlength="40" value="'+esc(r.client)+'"></label>'+
+  (clients.length ? '<div class="chips small" style="margin-top:6px">'+clients.map(c => '<button type="button" data-set="client" data-value="'+esc(c)+'">'+esc(c)+'</button>').join("")+'</div>' : "")+
+  '<fieldset><legend id="lg-division" class="req">분류</legend>'+chipsHTML("division")+'</fieldset>'+
+  '<fieldset><legend id="lg-request" class="req">의뢰방법</legend>'+chipsHTML("request")+'</fieldset>'+
+  '<h3>통역</h3>'+
+  '<label class="f">수어통역내용<textarea name="content" maxlength="4000" placeholder="예) 진료 중 증상 설명과 검사 안내를 통역함">'+esc(r.content)+'</textarea></label>'+
+  '<fieldset><legend id="lg-area" class="req">수어통역영역</legend><div id="area-chips"></div></fieldset>'+
+  '<fieldset><legend id="lg-targets" class="req">수어통역대상 <span class="muted">(여러 개 선택 가능)</span></legend>'+chipsHTML("targets")+'</fieldset>'+
+  '<fieldset><legend id="lg-method" class="req">수어통역방법</legend>'+chipsHTML("method")+'</fieldset>'+
+  '<h3>결과</h3>'+
+  '<label class="f">결과<textarea name="result" maxlength="1000" placeholder="예) 다음 진료를 예약함">'+esc(r.result)+'</textarea></label><div class="counter" id="result-count"></div>'+
+  '<label style="display:flex;gap:8px;align-items:center;min-height:44px;font-size:15px"><input type="checkbox" name="pendingResult" style="width:22px;height:22px"'+(r.pendingResult ? " checked" : "")+'>결과 미확정 · 나중에 확인</label>'+
+  '<details'+(r.program || r.deafNames || r.hearingNames ? " open" : "")+'><summary style="font-weight:700;min-height:44px;padding-top:10px;cursor:pointer">프로그램명 · 참석자 (선택)</summary>'+
+  '<label class="f">프로그램명<input name="program" maxlength="100" value="'+esc(r.program)+'"></label>'+
+  '<label class="f">참석 농인 이름 <span class="muted">(쉼표로 구분, 기존 시스템에서 선택)</span><input name="deafNames" maxlength="200" value="'+esc(r.deafNames)+'"></label>'+
+  '<label class="f">참석 청인 이름 <span class="muted">(쉼표로 구분)</span><input name="hearingNames" maxlength="200" value="'+esc(r.hearingNames)+'"></label></details>'+
+  '</form>'+
+  '<div class="bottom"><div class="actions" style="margin:0"><button type="button" class="primary" id="done-edit" style="flex:1;min-height:52px">저장하고 목록으로</button>'+
+  (wide() ? '<button type="button" id="to-detail" style="min-height:52px">PC 입력 화면</button>' : "")+'</div></div>';
+}
+function bindEdit(item){
+  const form = $("#ed");
+  const sync = () => {
+    const r = item.rec;
+    form.querySelectorAll("[data-chip]").forEach(b => {
+      const k = b.dataset.chip, v = b.dataset.value;
+      b.setAttribute("aria-pressed", String(k === "targets" ? r.targets.includes(v) : r[k] === v));
+    });
+    const info = timeInfo(r);
+    $("#calc").textContent = info ? "총 "+info.total+"분"+(info.overnight ? " (다음 날 "+r.end+" 종료)" : "")+" · "+["새벽","오전","오후","저녁"].map((n,i) => info.bands[i] ? n+" "+info.bands[i]+"분" : "").filter(Boolean).join(", ")+" — 기존 시스템과 같은 기준" :
+      r.start && r.end ? "시작과 종료 시각이 같습니다." : "시작·종료를 입력하면 시간대별 분을 계산합니다.";
+    const sug = r.area ? "" : suggestArea(r);
+    const area = $("#area-chips"); area.innerHTML = chipsHTML("area", false, sug);
+    area.querySelectorAll("[data-chip]").forEach(b => b.setAttribute("aria-pressed", String(r.area === b.dataset.value)));
+    const rc = $("#result-count"); rc.textContent = r.result.length + " / " + LIMIT.result + "자"; rc.className = "counter" + (r.result.length > LIMIT.result ? " over" : "");
+    const miss = missing(r), warn = warnings(r);
+    $("#state").innerHTML = miss.length ? '<button type="button" class="missing" id="jump">남은 항목 '+miss.length+'개: '+esc(miss.map(m => m[1]).join(", "))+' →</button>' :
+      '<div class="complete">모든 필수 항목 입력 · '+(r.status === "done" ? (r.needsCorrection ? "입력 완료 건 수정됨 (기존 시스템 반영 필요)" : "입력 완료") : "입력 대기")+(warn.length ? '<br><span style="font-weight:500">'+esc(warn.join(" · "))+'</span>' : "")+'</div>';
+    $("#jump")?.addEventListener("click", () => {
+      const k = miss[0][0];
+      const el = form.querySelector('[name="'+k+'"]') || form.querySelector('[data-chip="'+k+'"]') || $("#lg-"+k);
+      el?.scrollIntoView({block:"center"}); if (el && el.focus) el.focus();
+    });
+  };
+  const set = changes => { commit(item, changes); sync(); };
+  form.addEventListener("input", e => {
+    const t = e.target; if (!t.name) return;
+    set({[t.name]: t.type === "checkbox" ? t.checked : t.value});
+  });
+  editClick = function(e){
+    const b = e.target.closest("button"); if (!b || !$("#ed")) return;
+    if (b.dataset.chip) {
+      const k = b.dataset.chip, v = b.dataset.value, r = item.rec;
+      if (k === "targets") set({targets: OPT.targets.filter(t => t === v ? !r.targets.includes(v) : r.targets.includes(t))});
+      else set({[k]: r[k] === v ? "" : v});
+      if (k === "division" && item.rec.division === "내방" && !item.rec.place) { set({place:"센터"}); form.place.value = "센터"; }
+      return;
+    }
+    if (b.dataset.set) { form[b.dataset.set].value = b.dataset.value; set({[b.dataset.set]: b.dataset.value}); return; }
+    if (b.dataset.now) { const v = koreaTime(); form[b.dataset.now].value = v; set({[b.dataset.now]: v}); return; }
+    if (b.dataset.copyfrom) {
+      const src = findItem(b.dataset.copyfrom)?.rec; if (!src) return;
+      const keys = ["place","client","division","request","targets","method","area","program","deafNames","hearingNames"];
+      set(Object.fromEntries(keys.map(k => [k, clone(src[k])])));
+      render(false); toast("이전 기록의 항목을 불러왔습니다. 날짜·시간·내용·결과를 입력하세요."); return;
+    }
+    if (b.id === "done-edit" || b.id === "to-detail") {
+      const r = item.rec;
+      if (!hasContent(item) && !r.start && !r.end) { S.items = S.items.filter(it => it !== item); persist(); go("list"); return; }
+      syncNow();
+      if (b.id === "to-detail") go("detail", r.id);
+      else { go("list"); const miss = missing(r).map(m => m[1]); toast(miss.length ? "작성 중으로 저장 · 남은 항목: " + miss.join(", ") : "입력 대기로 저장했습니다."); }
+    }
+  };
+  $("#main").addEventListener("click", editClick);
+  sync();
+}
+
+/* ---------- detail / PC entry ---------- */
+function fillPayload(r){
+  const info = timeInfo(r);
+  return JSON.stringify({k:"ksl-fill", v:1, id:r.id, interpreter:r.interpreter, date:r.date, start:r.start, end:r.end,
+    bands: info ? info.bands : null, place:r.place, program:r.program, division:r.division, request:r.request, targets:r.targets,
+    method:r.method, area:r.area, content:r.content, result:r.result, client:r.client, deafNames:r.deafNames, hearingNames:r.hearingNames});
+}
+function detailHTML(item){
+  const r = item.rec; const info = timeInfo(r); const miss = missing(r); const warn = warnings(r);
+  if (item.theirs) return conflictHTML(item);
+  const rows = [
+    ["수어통역사", r.interpreter, true], ["수어통역일", r.date ? r.date+" ("+weekday(r.date)+")" : "", false],
+    ["수어통역시간", r.start && r.end ? r.start+" ~ "+r.end+(info ? " · 총 "+info.total+"분"+(info.overnight ? " (다음 날 종료)" : "") : "") : "", false],
+    ["새벽·오전·오후·저녁", info ? info.bands.join(" · ")+" 분 (기존 시스템이 자동 계산)" : "", false],
+    ["수어통역장소", r.place, true], ["프로그램명", r.program, true], ["분류", r.division, false], ["의뢰방법", r.request, false],
+    ["통역대상", r.targets.join(", "), false], ["통역방법", r.method, false], ["통역영역", r.area, false],
+    ["수어통역내용", r.content, true], ["결과", r.result + (r.pendingResult ? (r.result ? "\n" : "")+"(결과 미확정)" : ""), true],
+    ["의뢰인", r.client, true], ["참석 농인", r.deafNames, true], ["참석 청인", r.hearingNames, true]
+  ];
+  return '<h2 id="detail-h" tabindex="-1">'+esc(r.client || r.place || "통역 기록")+' <span class="chip '+r.status+'">'+STATUS[r.status]+'</span></h2>'+
+    '<p class="muted">'+esc([r.owner && "작성 "+r.owner, item.dirty ? "저장 대기" : "", r.updated && "수정 "+new Date(r.updated).toLocaleString("ko-KR",{timeZone:"Asia/Seoul",dateStyle:"short",timeStyle:"short"})].filter(Boolean).join(" · "))+'</p>'+
+    (item.error ? '<p class="note">이 기록을 저장하지 못했습니다('+esc(item.error)+'). 관리자에게 알려 주세요.</p>' : "")+
+    (r.needsCorrection ? '<p class="note">입력 완료 후 내용이 바뀌었습니다. 기존 시스템의 등록 건을 찾아 수정한 뒤 아래에서 수정 완료를 표시하세요.</p>' : "")+
+    (miss.length ? '<p class="note">남은 항목: '+esc(miss.map(m => m[1]).join(", "))+'</p>' : "")+
+    (warn.length ? '<p class="note">'+esc(warn.join(" · "))+'</p>' : "")+
+    '<div class="actions"><button type="button" id="edit">수정</button><button type="button" id="back" class="ghost">목록</button></div>'+
+    (r.status !== "done" || r.needsCorrection ? '<h3>기존 통역일지에 입력하기</h3>'+
+      (wide() ? '<ol class="steps"><li><button type="button" class="primary" id="copy-open"'+(miss.length ? " disabled" : "")+'>입력값 복사하고 등록 화면 열기</button>'+(miss.length ? '<div class="muted">남은 항목을 먼저 채우세요.</div>' : "")+'</li>'+
+        '<li>열린 등록 화면에서 즐겨찾기 막대의 <b>통역일지 채우기</b>를 누르고 <b>Ctrl+V</b>를 누릅니다. <a href="#" id="howto-bm">즐겨찾기 설치 방법</a></li>'+
+        '<li>노랗게 표시된 칸을 확인하고, 의뢰인과 참석자를 기존 화면에서 선택한 뒤 <b>등록</b>을 직접 누릅니다.</li>'+
+        '<li><button type="button" id="mark-done"'+(miss.length && !r.needsCorrection ? " disabled" : "")+'>'+(r.needsCorrection ? "기존 시스템 수정 완료" : "등록 완료로 표시")+'</button></li></ol>' :
+        '<p class="muted">사무실 PC에서 같은 주소를 열면 기존 통역일지 화면을 자동으로 채울 수 있습니다.</p>') : '<div class="actions"><button type="button" id="reopen" class="ghost">입력 대기로 되돌리기</button></div>')+
+    '<h3>항목별 내용</h3><dl class="copy">'+rows.map(([label,value,copy],i) => '<div><dt>'+esc(label)+'</dt><dd>'+esc(value || "—")+'</dd>'+(copy && value ? '<button type="button" data-copyrow="'+i+'">복사</button>' : "<span></span>")+'</div>').join("")+'</dl>'+
+    '<div class="actions"><button type="button" class="danger ghost" id="delete">이 기록 삭제</button></div>';
+}
+async function copyText(text){
+  try { await navigator.clipboard.writeText(text); return true; }
+  catch {
+    const ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand("copy"); } catch {} ta.remove(); return ok;
+  }
+}
+function bindDetail(item){
+  const r = item.rec;
+  if (item.theirs) { bindConflict(item); return; }
+  $("#edit").onclick = () => go("edit", r.id);
+  $("#back").onclick = () => go("list");
+  $("#copy-open")?.addEventListener("click", async () => {
+    const ok = await copyText(fillPayload(item.rec));
+    window.open(FORM_URL, "kbdeaf-form");
+    toast(ok ? "복사했습니다. 등록 화면에서 ‘통역일지 채우기’ → Ctrl+V" : "복사하지 못했습니다. 다시 눌러 주세요.");
+  });
+  $("#howto-bm")?.addEventListener("click", e => { e.preventDefault(); go("settings"); setTimeout(() => $("#bm-help")?.scrollIntoView(), 50); });
+  $("#mark-done")?.addEventListener("click", () => {
+    const fix = item.rec.needsCorrection;
+    if (!confirm(fix ? "기존 통역일지의 등록 건을 수정했습니까?" : "기존 통역일지에서 ‘등록’까지 마쳤습니까?")) return;
+    commit(item, {status:"done", needsCorrection:false}); syncNow(); render(false); toast(fix ? "수정 완료로 표시했습니다." : "입력 완료로 표시했습니다.");
+  });
+  $("#reopen")?.addEventListener("click", () => {
+    if (!confirm("입력 완료 표시를 취소하고 입력 대기로 되돌릴까요?")) return;
+    commit(item, {status: missing(item.rec).length ? "draft" : "ready", needsCorrection:false}); syncNow(); render(false);
+  });
+  $("#delete").onclick = () => {
+    if (!confirm(item.rec.status === "done" ? "앱에서만 삭제합니다. 기존 통역일지의 등록 건은 그대로입니다. 삭제할까요?" : "이 기록을 삭제할까요?")) return;
+    commit(item, {status:"deleted"});
+    if (!item.base) S.items = S.items.filter(it => it !== item);
+    persist(); syncNow(); go("list"); toast("삭제했습니다.");
+  };
+  document.querySelectorAll("[data-copyrow]").forEach(b => b.onclick = async () => {
+    const row = b.closest("div").querySelector("dd").textContent;
+    toast(await copyText(row) ? "복사했습니다." : "복사하지 못했습니다.");
+  });
+}
+function conflictHTML(item){
+  const mine = item.rec, theirs = item.theirs;
+  const show = (k,v) => k === "targets" ? v.join(", ") : k === "pendingResult" ? (v ? "예" : "아니오") : k === "status" ? (STATUS[v] || "삭제됨") : v;
+  return '<h2 id="detail-h" tabindex="-1">두 기기에서 고친 내용 비교</h2>'+
+    '<p class="muted">이 기기와 다른 기기(예: 사무실 PC)에서 같은 항목을 다르게 고쳤습니다. 항목마다 남길 내용을 고르세요.</p>'+
+    '<form id="cf">'+item.conflicts.map(k => '<div class="diff"><b>'+esc(LABEL[k]||k)+'</b>'+
+      '<label><input type="radio" name="'+k+'" value="mine" checked><span>이 기기 · '+esc(show(k,mine[k]) || "—")+'</span></label>'+
+      '<label><input type="radio" name="'+k+'" value="theirs"><span>다른 기기 · '+esc(show(k,theirs[k]) || "—")+'</span></label></div>').join("")+
+    '</form><div class="actions"><button type="button" class="primary" id="resolve">선택한 내용으로 저장</button><button type="button" id="back" class="ghost">나중에</button></div>';
+}
+function bindConflict(item){
+  $("#back").onclick = () => go("list");
+  $("#resolve").onclick = () => {
+    const data = new FormData($("#cf"));
+    const {merged} = merge3(item.base, item.rec, item.theirs);
+    for (const k of item.conflicts) merged[k] = clone(data.get(k) === "theirs" ? item.theirs[k] : item.rec[k]);
+    if (item.theirs.status === "done" && merged.status === "done" && FIELDS.some(k => !same(merged[k], item.theirs[k]))) merged.needsCorrection = true;
+    item.rec = merged; item.base = item.theirs; item.theirs = null; item.conflicts = []; item.dirty = true;
+    persist(); syncNow(); go("detail", merged.id); toast("선택한 내용으로 저장했습니다.");
+  };
+}
+
+/* ---------- home panel on wide screens ---------- */
+function homeHTML(){
+  return '<h2>사무실 PC에서 입력하기</h2>'+
+    '<p class="muted">왼쪽 목록에서 <b>입력 대기</b> 기록을 고르면 기존 통역일지 등록 화면을 자동으로 채울 수 있습니다.</p>'+
+    '<p class="muted">즐겨찾기 ‘통역일지 채우기’가 아직 없다면 <a href="#" id="go-bm">설정</a>에서 설치하세요.</p>'+
+    (isAdmin() ? '<p class="muted">통역사 추가와 연결 링크 보내기는 위쪽 <b>관리</b>에서 합니다.</p>' : "");
+}
+function bindHome(){ $("#go-bm")?.addEventListener("click", e => { e.preventDefault(); go("settings"); setTimeout(() => $("#bm-help")?.scrollIntoView(), 50); }); }
+
+/* ---------- admin: interpreters & links ---------- */
+let adminUsers = null, adminMsg = "", qrFor = "";
+function adminHTML(){
+  return '<section class="panel"><h2 tabindex="-1">통역사 관리</h2>'+
+    '<p class="muted">통역사를 추가하고 <b>링크 보내기</b>를 누르면 카카오톡·문자로 연결 링크를 보낼 수 있습니다. 통역사는 링크를 누르기만 하면 됩니다.</p>'+
+    '<form id="uf" class="row" style="align-items:end"><label class="f">이름<input name="name" maxlength="20" required></label>'+
+    '<div><label style="display:flex;gap:8px;align-items:center;min-height:44px"><input type="checkbox" name="admin" style="width:20px;height:20px">관리자 권한</label><button class="primary" type="submit" style="width:100%">추가</button></div></form>'+
+    (adminMsg ? '<p class="note">'+esc(adminMsg)+'</p>' : "")+
+    (adminUsers === null ? '<p class="muted">불러오는 중…</p>' :
+      '<ul class="list" style="margin-top:14px">'+adminUsers.map(u => '<li class="panel" style="padding:12px"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>'+esc(u.name)+(u.role === "admin" ? ' <span class="chip">관리자</span>' : "")+(u.active ? "" : ' <span class="chip warn">사용 중지</span>')+'</b>'+
+        '<span class="muted">연결 코드 <b>'+esc(u.code)+'</b></span></div>'+
+        (u.active ? '<div class="actions" style="margin-top:8px"><button type="button" class="primary" data-share="'+esc(u.name)+'">링크 보내기</button><button type="button" data-qr="'+esc(u.name)+'">QR</button>'+
+          '<button type="button" class="ghost" data-reset="'+esc(u.name)+'">코드 다시 만들기</button>'+(u.name !== S.settings.name ? '<button type="button" class="ghost danger" data-active="'+esc(u.name)+'" data-on="0">사용 중지</button>' : "")+'</div>' :
+          '<div class="actions" style="margin-top:8px"><button type="button" data-active="'+esc(u.name)+'" data-on="1">다시 사용</button></div>')+
+        (qrFor === u.name ? '<canvas class="qr" id="uqr" width="200" height="200" aria-label="'+esc(u.name)+' 연결 QR" style="margin-top:10px"></canvas>' : "")+
+        '</li>').join("")+'</ul>')+
+    '<div class="actions"><button type="button" class="ghost" id="ad-back">돌아가기</button></div></section>';
+}
+async function adminCall(body){
+  try {
+    const res = await api({...body, token:S.settings.token});
+    if (res.error === "auth") { signedOut("연결이 해제되었습니다."); return; }
+    if (!res.ok) { adminMsg = {duplicate:"같은 이름이 이미 있습니다.", name:"이름을 확인하세요.", self:"자기 자신은 사용 중지할 수 없습니다."}[res.error] || "처리하지 못했습니다."; }
+    else { adminUsers = res.users; adminMsg = ""; }
+  } catch { adminMsg = "인터넷 연결을 확인하세요."; }
+  if (view.name === "admin") { render(false); if (qrFor) { const c = $("#uqr"); const u = adminUsers && adminUsers.find(x => x.name === qrFor); if (c && u) drawQR(c, inviteLink(u.code)); } }
+}
+function bindAdmin(){
+  if (adminUsers === null && !adminMsg) adminCall({action:"users"});
+  $("#ad-back").onclick = () => go("list");
+  $("#uf").onsubmit = e => { e.preventDefault(); const f = e.target; const name = f.name.value.trim(); if (!name) return; adminCall({action:"addUser", name, role: f.admin.checked ? "admin" : "interpreter"}); };
+  document.querySelectorAll("[data-share]").forEach(b => b.onclick = async () => {
+    const u = adminUsers.find(x => x.name === b.dataset.share); if (!u) return;
+    const link = inviteLink(u.code);
+    const text = "[통역일지] "+u.name+"님 연결 링크입니다. 휴대폰에서 눌러 주세요.\n"+link+"\n(아이폰 홈 화면 앱에서는 연결 코드 "+u.code+" 입력)";
+    if (navigator.share && !wide()) { try { await navigator.share({title:"통역일지 연결", text}); return; } catch {} }
+    toast(await copyText(text) ? "링크를 복사했습니다. 카카오톡이나 문자에 붙여 넣으세요." : link);
+  });
+  document.querySelectorAll("[data-qr]").forEach(b => b.onclick = () => { qrFor = qrFor === b.dataset.qr ? "" : b.dataset.qr; render(false); const c = $("#uqr"); const u = adminUsers.find(x => x.name === qrFor); if (c && u) drawQR(c, inviteLink(u.code)); });
+  document.querySelectorAll("[data-reset]").forEach(b => b.onclick = () => { if (confirm(b.dataset.reset+"님의 연결 코드를 새로 만들까요? 지금 연결된 기기는 연결이 해제되어 새 링크로 다시 연결해야 합니다.")) adminCall({action:"resetCode", name:b.dataset.reset}); });
+  document.querySelectorAll("[data-active]").forEach(b => b.onclick = () => { const on = b.dataset.on === "1"; if (on || confirm(b.dataset.active+"님의 사용을 중지할까요? 그 기기에서는 더 이상 저장할 수 없습니다.")) adminCall({action:"setActive", name:b.dataset.active, active:on}); });
+}
+
+/* ---------- settings ---------- */
+function settingsHTML(){
+  return '<section class="panel"><h2 tabindex="-1">설정</h2>'+
+    '<p><b>'+esc(S.settings.name)+'</b>님'+(isAdmin() ? " (관리자)" : "")+'으로 연결되어 있습니다.</p>'+
+    '<form id="st"><label style="display:flex;gap:8px;align-items:center;min-height:44px"><input type="checkbox" name="defaultMethod" style="width:22px;height:22px"'+(S.settings.defaultMethod ? " checked" : "")+'>새 기록의 통역방법을 ‘수어,음성통역’으로 미리 선택</label>'+
+    '<label style="display:flex;gap:8px;align-items:center;min-height:44px"><input type="checkbox" name="defaultTargets" style="width:22px;height:22px"'+(S.settings.defaultTargets ? " checked" : "")+'>새 기록의 통역대상을 ‘농인·청인’으로 미리 선택</label>'+
+    '<div class="actions"><button class="primary" type="submit">저장</button><button type="button" class="ghost" id="st-back">돌아가기</button></div></form>'+
+    '<p class="'+(offlineReady ? "okbox" : "note")+'">'+(offlineReady ? "인터넷 없는 곳에서도 열 수 있도록 준비되었습니다." : "오프라인 사용 준비 중입니다. 인터넷이 연결된 곳에서 한 번 더 열어 주세요.")+'</p>'+
+    (!standalone() && !wide() ? '<div class="actions"><button type="button" id="st-install">홈 화면에 추가하는 방법</button></div>' : "")+
+    '</section>'+
+    (wide() ? '<section class="panel" style="margin-top:14px" id="bm-help"><h2>사무실 PC: ‘통역일지 채우기’ 즐겨찾기 설치</h2>'+
+      '<ol class="steps"><li>키보드에서 <b>Ctrl+Shift+B</b>를 눌러 주소창 아래에 즐겨찾기 막대를 표시합니다.</li><li>아래 노란 단추를 마우스로 누른 채 즐겨찾기 막대까지 끌어다 놓습니다.</li><li>기존 통역일지 신규 작성 화면에서 이 즐겨찾기를 누르면 채우기 창이 열립니다.</li></ol>'+
+      '<a class="bm" id="bm" href="#" draggable="true">통역일지 채우기</a><p class="muted">입력칸만 채웁니다. 등록·저장 버튼은 누르지 않습니다.</p></section>' : "")+
+    '<section class="panel" style="margin-top:14px"><h2>이 기기 연결 해제</h2><p class="muted">기기를 바꾸거나 다른 사람이 쓸 때 사용합니다. 저장되지 않은 기록이 있으면 먼저 인터넷에 연결하세요.</p>'+
+    '<div class="actions"><button type="button" class="danger" id="logout">연결 해제</button></div></section>';
+}
+function bindSettings(){
+  const form = $("#st");
+  form.onsubmit = e => { e.preventDefault(); S.settings.defaultMethod = form.defaultMethod.checked; S.settings.defaultTargets = form.defaultTargets.checked; persist(); toast("저장했습니다."); go("list"); };
+  $("#st-back").onclick = () => go("list");
+  $("#st-install")?.addEventListener("click", () => go("install"));
+  const bm = $("#bm"); if (bm) { bm.href = "javascript:" + encodeURIComponent(FILLER.toString().replace(/^function FILLER\(\)\s*\{|\}$/g, "").replace(/\n\s*/g, "\n")); bm.onclick = e => { e.preventDefault(); toast("즐겨찾기 막대로 끌어다 놓으세요."); }; }
+  $("#logout").onclick = () => {
+    const p = pendingCount();
+    if (!confirm(p ? "아직 저장되지 않은 기록 "+p+"건이 이 기기에서 지워집니다. 그래도 연결을 해제할까요?" : "이 기기의 연결을 해제할까요? 기록은 구글 시트에 남아 있습니다.")) return;
+    S.items = []; S.settings.token = ""; S.settings.name = ""; S.settings.role = ""; persist(); view.message = ""; go("join");
+  };
+}
+
+/* ---------- offline support ---------- */
+let offlineReady = false;
+if ("serviceWorker" in navigator && isSecureContext && /^https?:$/.test(location.protocol)) {
+  navigator.serviceWorker.register("sw.js").then(() => navigator.serviceWorker.ready).then(() => { offlineReady = true; if (view.name === "settings") render(false); }).catch(() => {});
+}
+
+/* ---------- bookmarklet: runs on the existing 통역일지 page; fills fields only, never submits ---------- */
+function FILLER(){
+(function(){
+var F=document.transForm;
+if(!F||!/trans_form\.php/.test(location.pathname)){alert("기존 통역일지의 신규 작성 화면에서 눌러 주세요.");return;}
+if(F.trans_seq&&F.trans_seq.value){alert("이미 등록된 기록 화면입니다. ‘신규등록’ 화면에서 사용하세요.");return;}
+var old=document.getElementById("ksl-fill");if(old)old.remove();
+var box=document.createElement("div");box.id="ksl-fill";
+box.style.cssText="position:fixed;right:14px;bottom:14px;z-index:2147483647;width:360px;max-height:60vh;overflow:auto;background:#fff;color:#172847;border:3px solid #184bad;border-radius:12px;padding:14px;font:14px/1.55 'Malgun Gothic',sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.3);text-align:left";
+box.innerHTML="<b style='font-size:16px'>통역일지 채우기</b><p style='margin:6px 0'>통역일지 앱에서 복사했다면 지금 <b>Ctrl+V</b>를 누르세요.</p><textarea aria-label='붙여넣기' style='width:100%;height:46px;font-size:12px'></textarea><div class='ksl-out'></div><p style='margin:8px 0 0;text-align:right'><button type='button' class='ksl-close'>닫기</button></p>";
+document.body.appendChild(box);
+var ta=box.querySelector("textarea"),out=box.querySelector(".ksl-out");ta.focus();
+box.querySelector(".ksl-close").onclick=function(){box.remove();};
+ta.addEventListener("paste",function(e){var t=(e.clipboardData||window.clipboardData).getData("text");e.preventDefault();run(t);});
+ta.addEventListener("input",function(){if(ta.value.trim().charAt(0)==="{")run(ta.value);});
+function h(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+function run(t){
+var d;try{d=JSON.parse(t);}catch(x){out.innerHTML="<p style='color:#a02424'>통역일지 앱의 ‘입력값 복사’로 복사한 내용이 아닙니다.</p>";return;}
+if(!d||d.k!=="ksl-fill"){out.innerHTML="<p style='color:#a02424'>통역일지 앱에서 복사한 내용이 아닙니다.</p>";return;}
+var done=[],warn=[],todo=[];
+function mark(el){el.style.background="#fff3b0";el.style.outline="2px solid #e0a73a";}
+function text(name,val,label,max){var el=F.elements[name];if(!el){warn.push(label+": 입력칸을 찾지 못함");return;}if(val==null||val===""){return;}
+ if(el.value&&el.value!==val&&name==="translater_nm")warn.push("통역사: 화면의 ‘"+el.value+"’을 ‘"+val+"’로 바꿈");
+ if(max&&val.length>max)warn.push(label+": "+max+"자 제한보다 깁니다 ("+val.length+"자). 줄여 주세요.");
+ el.value=val;mark(el);done.push(label);}
+function pick(name,label,val,map){var els=F.querySelectorAll("[name='"+name+"']"),hit=null;for(var i=0;i<els.length;i++){var lt=lab(els[i]);if(lt===val)hit=els[i];}
+ if(!val){return;}if(!hit){warn.push(label+": ‘"+val+"’ 선택지를 찾지 못함");return;}hit.checked=true;mark(hit.parentNode||hit);try{hit.dispatchEvent(new Event("change",{bubbles:true}));}catch(x){}done.push(label);}
+function lab(el){var n=el.nextSibling,s="";while(n&&!(n.nodeType===1&&n.tagName==="INPUT")){s+=n.textContent||"";n=n.nextSibling;if(s.trim().length>10)break;}return s.replace(/\s+/g," ").trim();}
+text("translater_nm",d.interpreter,"수어통역사",20);
+var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(d.date||"");
+if(m&&F.trans_dt){var dt=new Date(+m[1],+m[2]-1,+m[3]),v;
+ try{v=window.jQuery&&jQuery.datepicker?jQuery.datepicker.formatDate("yy-mm-dd-DD ",dt,jQuery.datepicker._defaults):null;}catch(x){v=null;}
+ if(!v)v=d.date+"-"+"일월화수목금토".charAt(dt.getDay())+" ";
+ F.trans_dt.value=v;mark(F.trans_dt);done.push("수어통역일");}
+var st=(d.start||"").split(":"),en=(d.end||"").split(":");
+if(st.length===2&&en.length===2){F.start_time_1.value=st[0];F.start_time_2.value=st[1];F.end_time_1.value=en[0];F.end_time_2.value=en[1];
+ [F.start_time_1,F.start_time_2,F.end_time_1,F.end_time_2].forEach(mark);done.push("시작·종료 시각");
+ if(typeof window.chk_time==="function"){window.chk_time();
+  var got=[1,2,3,4].map(function(i){return +(F.elements["trans_duration_"+i]||{}).value||0;});
+  if(d.bands&&got.join()!==d.bands.join())warn.push("시간대별 분이 앱 계산("+d.bands.join("·")+")과 화면("+got.join("·")+")이 다릅니다.");
+  else done.push("시간대별 분(자동 계산)");}
+ else todo.push("시간대별 분이 계산되지 않았습니다. 시각 칸을 한 번 눌렀다가 나오세요.");}
+text("trans_place",d.place,"수어통역장소",40);
+text("program_nm",d.program,"프로그램명");
+pick("trans_support_type","분류",d.division);
+pick("req_type","의뢰방법",d.request);
+var boxes=F.querySelectorAll("[name='person_type[]']");if(boxes.length&&d.targets){var hits=0;for(var i=0;i<boxes.length;i++){var on=d.targets.indexOf(lab(boxes[i]))>=0;boxes[i].checked=on;if(on){mark(boxes[i].parentNode||boxes[i]);hits++;}}
+ if(hits!==d.targets.length)warn.push("통역대상 일부를 찾지 못함");else done.push("통역대상");}
+pick("trans_type","통역방법",d.method);
+pick("content_type","통역영역",d.area);
+text("trans_content",d.content,"수어통역내용");
+text("trans_result",d.result,"결과",200);
+var html="<p style='margin:8px 0;color:#11634d'><b>"+done.length+"개 항목을 채웠습니다.</b> 노란 칸을 확인하세요.</p>";
+if(warn.length)html+="<div style='background:#fff3d9;color:#674207;padding:8px;border-radius:8px;margin:6px 0'>"+warn.map(h).join("<br>")+"</div>";
+html+="<p style='margin:8px 0 4px'><b>직접 할 일</b></p><ol style='margin:0;padding-left:20px'>";
+if(F.req_name&&!F.req_name.value){html+="<li>의뢰인 선택: <button type='button' class='ksl-client'>‘"+h(d.client)+"’ 검색 창 열기</button></li>";}
+var dn=(d.deafNames||"").split(/[,，]/).map(function(s){return s.trim();}).filter(Boolean),hn=(d.hearingNames||"").split(/[,，]/).map(function(s){return s.trim();}).filter(Boolean);
+if(dn.length)html+="<li>참석인원(농인) 선택: "+dn.map(function(n,i){return "<button type='button' class='ksl-person' data-kind='deaf' data-name='"+h(n)+"'>"+h(n)+"</button>";}).join(" ")+"</li>";
+if(hn.length)html+="<li>참석인원(청인) 선택: "+hn.map(function(n){return "<button type='button' class='ksl-person' data-kind='hearing' data-name='"+h(n)+"'>"+h(n)+"</button>";}).join(" ")+"</li>";
+todo.forEach(function(x){html+="<li>"+h(x)+"</li>";});
+html+="<li>내용을 확인한 뒤 화면 아래 <b>등록</b>을 직접 누르세요.</li><li>통역일지 앱으로 돌아가 <b>등록 완료로 표시</b>를 누르세요.</li></ol>";
+out.innerHTML=html;ta.value="";ta.style.display="none";box.querySelector("p").style.display="none";
+var cb=box.querySelector(".ksl-client");if(cb)cb.onclick=function(){openPop("pop_deaf_list.php?person_type=&search_type=name&search="+encodeURIComponent(d.client||""),"target_member_detail");};
+Array.prototype.forEach.call(box.querySelectorAll(".ksl-person"),function(b){b.onclick=function(){
+ var deaf=b.getAttribute("data-kind")==="deaf",nm=deaf?"reqPersonNm[]":"visitPersonNm[]",rows=document.getElementsByName(nm),idx=-1;
+ for(var i=0;i<rows.length;i++)if(!rows[i].value){idx=i;break;}
+ if(idx<0){if(deaf&&typeof window.addReqPerson==="function")window.addReqPerson();else if(!deaf&&typeof window.addVisitPerson==="function")window.addVisitPerson();idx=document.getElementsByName(nm).length-1;}
+ openPop((deaf?"pop_deaf_list.php":"pop_target_list.php")+"?mode=sel_name&idx="+idx+"&search_type=name&search="+encodeURIComponent(b.getAttribute("data-name")),"target_member_detail");};});
+function openPop(u,n){if(typeof window.openWindow==="function")window.openWindow(u,n,"1","620","600");else window.open(u,n,"width=620,height=600,scrollbars=yes");}
+}
+})();
+}
+
+/* ---------- minimal QR encoder (byte mode, level M, versions 1-6) for the phone address ---------- */
+function qrMatrix(text){
+  const data = [...new TextEncoder().encode(text)];
+  const V = [null,{ec:10,b:[16]},{ec:16,b:[28]},{ec:26,b:[44]},{ec:18,b:[32,32]},{ec:24,b:[43,43]},{ec:16,b:[27,27,27,27]}];
+  let ver = 1; while (ver <= 6 && V[ver].b.reduce((a,b)=>a+b,0) < data.length + 2) ver++;
+  if (ver > 6) return null;
+  const cap = V[ver].b.reduce((a,b)=>a+b,0);
+  const bits = []; const put = (v,n) => { for (let i=n-1;i>=0;i--) bits.push((v>>>i)&1); };
+  put(4,4); put(data.length,8); data.forEach(b => put(b,8)); put(0, Math.min(4, cap*8 - bits.length));
+  while (bits.length % 8) bits.push(0);
+  const bytes = []; for (let i=0;i<bits.length;i+=8) bytes.push(parseInt(bits.slice(i,i+8).join(""),2));
+  for (let p=0; bytes.length < cap; p++) bytes.push(p%2 ? 0x11 : 0xEC);
+  const EXP = new Array(512), LOG = new Array(256); let x = 1;
+  for (let i=0;i<255;i++){ EXP[i]=x; LOG[x]=i; x<<=1; if (x&256) x^=0x11d; } for (let i=255;i<512;i++) EXP[i]=EXP[i-255];
+  const mul = (a,b) => a && b ? EXP[LOG[a]+LOG[b]] : 0;
+  const ecn = V[ver].ec; let gen = [1];
+  for (let i=0;i<ecn;i++){ const g = new Array(gen.length+1).fill(0); gen.forEach((c,j)=>{ g[j]^=c; g[j+1]^=mul(c,EXP[i]); }); gen = g; }
+  const blocks = []; let off = 0;
+  for (const n of V[ver].b) { const d = bytes.slice(off, off+n); off += n; const r = d.concat(new Array(ecn).fill(0));
+    for (let i=0;i<n;i++){ const c = r[i]; if (c) for (let j=0;j<gen.length;j++) r[i+j]^=mul(gen[j],c); }
+    blocks.push({d, e:r.slice(n)}); }
+  const seq = [];
+  for (let i=0;i<Math.max(...blocks.map(b=>b.d.length));i++) blocks.forEach(b => { if (i < b.d.length) seq.push(b.d[i]); });
+  for (let i=0;i<ecn;i++) blocks.forEach(b => seq.push(b.e[i]));
+  const size = 17 + ver*4; const M = [...Array(size)].map(() => new Array(size).fill(null));
+  const fn = [...Array(size)].map(() => new Array(size).fill(false));
+  const setF = (r,c,v) => { M[r][c] = v; fn[r][c] = true; };
+  const finder = (r,c) => { for (let i=-1;i<=7;i++) for (let j=-1;j<=7;j++) { const rr=r+i, cc=c+j; if (rr<0||cc<0||rr>=size||cc>=size) continue;
+    setF(rr,cc, i>=0&&i<=6&&j>=0&&j<=6&&(i===0||i===6||j===0||j===6||(i>=2&&i<=4&&j>=2&&j<=4))); } };
+  finder(0,0); finder(0,size-7); finder(size-7,0);
+  for (let i=8;i<size-8;i++){ setF(6,i,i%2===0); setF(i,6,i%2===0); }
+  if (ver >= 2) { const p = [0,0,18,22,26,30,34][ver]; for (let i=-2;i<=2;i++) for (let j=-2;j<=2;j++) setF(p+i,p+j, Math.max(Math.abs(i),Math.abs(j))!==1); }
+  setF(size-8,8,true);
+  for (let i=0;i<9;i++){ if (!fn[8][i]) setF(8,i,false); if (!fn[i][8]) setF(i,8,false); }
+  for (let i=0;i<8;i++){ setF(8,size-1-i,false); setF(size-1-i,8,false); }
+  const dbits = []; seq.forEach(b => { for (let i=7;i>=0;i--) dbits.push((b>>i)&1); });
+  let k = 0;
+  for (let c=size-1, up=true; c>0; c-=2, up=!up) { if (c===6) c--;
+    for (let i=0;i<size;i++){ const r = up ? size-1-i : i; for (let d=0; d<2; d++){ const cc=c-d; if (!fn[r][cc]) { M[r][cc] = k < dbits.length ? dbits[k] === 1 : false; k++; } } } }
+  const masks = [(r,c)=>(r+c)%2===0,(r)=>r%2===0,(r,c)=>c%3===0,(r,c)=>(r+c)%3===0,(r,c)=>(Math.floor(r/2)+Math.floor(c/3))%2===0,(r,c)=>(r*c)%2+(r*c)%3===0,(r,c)=>((r*c)%2+(r*c)%3)%2===0,(r,c)=>((r+c)%2+(r*c)%3)%2===0];
+  const format = mask => { const d = (0<<3)|mask; let v = d<<10; for (let i=14;i>=10;i--) if ((v>>i)&1) v ^= 0x537<<(i-10); return ((d<<10)|v)^0x5412; };
+  const build = mask => { const A = M.map((row,r) => row.map((v,c) => fn[r][c] ? v : v !== masks[mask](r,c)));
+    const f = format(mask); const bit = i => ((f>>i)&1)===1;
+    for (let i=0;i<=5;i++) A[i][8]=bit(i); A[7][8]=bit(6); A[8][8]=bit(7); A[8][7]=bit(8); for (let i=9;i<15;i++) A[8][14-i]=bit(i);
+    for (let i=0;i<8;i++) A[8][size-1-i]=bit(i); for (let i=8;i<15;i++) A[size-15+i][8]=bit(i); A[size-8][8]=true;
+    return A; };
+  const penalty = A => { let p = 0;
+    for (let r=0;r<size;r++) for (const line of [A[r], A.map(x=>x[r])]) { let run=1; for (let i=1;i<size;i++){ if (line[i]===line[i-1]) run++; else { if (run>=5) p+=run-2; run=1; } } if (run>=5) p+=run-2; }
+    for (let r=0;r<size-1;r++) for (let c=0;c<size-1;c++) { const v=A[r][c]; if (v===A[r][c+1]&&v===A[r+1][c]&&v===A[r+1][c+1]) p+=3; }
+    const dark = A.flat().filter(Boolean).length; p += Math.floor(Math.abs(dark*20 - size*size*10)/(size*size))*10; return p; };
+  let best = null, bestP = Infinity; for (let m=0;m<8;m++){ const A = build(m); const p = penalty(A); if (p < bestP) { bestP = p; best = A; } }
+  return best;
+}
+function drawQR(canvas, text){
+  const A = qrMatrix(text); if (!A) return;
+  const n = A.length + 8, s = Math.floor(canvas.width / n), ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#fff"; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle = "#000";
+  const o = Math.floor((canvas.width - s*A.length)/2);
+  A.forEach((row,r) => row.forEach((v,c) => { if (v) ctx.fillRect(o+c*s, o+r*s, s, s); }));
+}
+
+/* ---------- start ---------- */
+$("#settings-btn").onclick = () => go("settings");
+$("#admin-btn").onclick = () => { adminUsers = null; adminMsg = ""; go("admin"); };
+load(); persist();
+addEventListener("resize", () => { if (wide() !== lastWide) { lastWide = wide(); if (view.name !== "edit") render(false); } });
+document.addEventListener("visibilitychange", () => { if (!document.hidden) syncNow(); });
+addEventListener("online", () => syncNow());
+(async () => {
+  const m = /[#&]c=(\d{8})/.exec(location.hash);
+  if (m) {
+    history.replaceState(null, "", location.pathname + location.search);
+    $("#main").innerHTML = '<section class="panel"><p>연결 중…</p></section>';
+    try { await join(m[1]); afterJoin(); return; }
+    catch (err) { view.name = "join"; view.message = err.message; }
+  }
+  render(false);
+  syncNow();
+})();
+</script>
+</body></html>
