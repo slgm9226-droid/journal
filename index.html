@@ -753,6 +753,7 @@ function detailHTML(item){
   return '<h2 id="detail-h" tabindex="-1"><span class="kind-mini kind-'+kindOf(r)+'">'+L.name+'</span> '+esc((isEdu(r) ? r.program : r.client) || r.place || L.name+" 기록")+' <span class="chip '+r.status+'">'+STATUS[r.status]+'</span></h2>'+
     '<p class="muted">'+esc([r.owner && "작성 "+r.owner, item.dirty ? "저장 대기" : "", r.updated && "수정 "+new Date(r.updated).toLocaleString("ko-KR",{timeZone:"Asia/Seoul",dateStyle:"short",timeStyle:"short"})].filter(Boolean).join(" · "))+'</p>'+
     (item.error ? '<p class="note">이 기록을 저장하지 못했습니다('+esc(item.error)+'). 관리자에게 알려 주세요.</p>' : "")+
+    (autoDone && autoDone.id === r.id && r.status === "done" ? '<div class="okbox"><b>기존 시스템에 등록되어 입력 완료로 표시했습니다.</b><div class="actions" style="margin-top:8px">'+(nextReady(r.id) ? '<button type="button" class="primary" id="go-next">다음 입력 대기 기록 →</button>' : '<span>남은 입력 대기 기록이 없습니다.</span>')+'<button type="button" class="ghost" id="undo-auto">되돌리기</button></div></div>' : "")+
     (r.needsCorrection ? '<p class="note">입력 완료 후 내용이 바뀌었습니다. 기존 시스템의 등록 건을 찾아 수정한 뒤 아래에서 수정 완료를 표시하세요.</p>' : "")+
     (miss.length ? '<p class="note">남은 항목: '+esc(miss.map(m => m[1]).join(", "))+'</p>' : "")+
     (warn.length ? '<p class="note">'+esc(warn.join(" · "))+'</p>' : "")+
@@ -778,6 +779,8 @@ function bindDetail(item){
   if (item.theirs) { bindConflict(item); return; }
   $("#edit").onclick = () => go("edit", r.id);
   $("#back").onclick = () => go("list");
+  $("#go-next")?.addEventListener("click", () => { const n = nextReady(r.id); autoDone = null; if (n) go("detail", n.rec.id); });
+  $("#undo-auto")?.addEventListener("click", () => { const prev = autoDone && autoDone.prev; autoDone = null; commit(item, {status: prev ? prev.status : "ready", needsCorrection: prev ? prev.needsCorrection : false}); syncNow(); render(false); toast("입력 대기로 되돌렸습니다."); });
   $("#copy-open")?.addEventListener("click", async () => {
     const ok = await copyText(fillPayload(item.rec));
     window.open(FORM_URLS[kindOf(item.rec)], "kbdeaf-form");
@@ -914,7 +917,7 @@ const HELP = [
     '<li><b>입력값 복사하고 등록 화면 열기</b>를 누릅니다. 기록 종류에 맞는 신규 작성 화면(통역관리·상담관리·수어교육관리·기타프로그램관리)이 열립니다.</li>'+
     '<li>열린 등록 화면에서 즐겨찾기 <b>통역·상담일지 채우기</b>를 누르고 <b>Ctrl+V</b>.</li>'+
     '<li>노란 칸을 확인하고, 의뢰인·참석자를 기존 화면에서 선택한 뒤 <b>등록</b>을 직접 누릅니다.</li>'+
-    '<li>앱으로 돌아와 <b>등록 완료로 표시</b>를 누릅니다.</li></ol>'+
+    '<li>등록하면 앱에 <b>입력 완료</b>가 자동으로 표시됩니다. 앱 화면에서 <b>다음 입력 대기 기록 →</b>을 누르면 바로 다음 건으로 넘어갑니다. (앱의 등록 화면 열기 단추로 연 화면일 때만 자동이며, 그 밖에는 <b>등록 완료로 표시</b>를 직접 누릅니다.)</li></ol>'+
     '<p class="muted">채우기 단추가 보이지 않으면 브라우저 창을 크게 띄우세요. 좁은 창에서는 휴대폰 화면으로 바뀝니다.</p>'],
   ["offline", "인터넷이 없을 때", '<p>인터넷이 없어도 홈 화면 아이콘으로 열어 기록할 수 있습니다. 기록은 휴대폰에 보관되었다가 인터넷(데이터·와이파이)이 연결되면 자동으로 센터에 저장됩니다. 화면 위에 <b>모두 저장됨</b>이 보이면 끝난 것입니다.</p>'+
     '<p class="muted">처음 연결할 때는 인터넷이 필요합니다. 휴대폰의 <b>사생활 보호(시크릿) 모드</b>에서는 쓰지 마세요.</p>'],
@@ -969,6 +972,27 @@ function bindSettings(){
   };
 }
 
+/* ---------- auto "입력 완료" when the existing system form is actually submitted ---------- */
+let autoDone = null;
+const FILL_ORIGINS = (window.KSL_CONFIG && Array.isArray(window.KSL_CONFIG.fillOrigins)) ? window.KSL_CONFIG.fillOrigins : [];
+addEventListener("message", e => {
+  if (!/^https?:\/\/(www\.)?kbdeaf\.or\.kr$/.test(e.origin) && !FILL_ORIGINS.includes(e.origin)) return;
+  const d = e.data;
+  if (!d || d.k !== "ksl-registered" || typeof d.id !== "string") return;
+  const it = findItem(d.id);
+  if (!it || it.rec.status === "deleted" || (it.rec.status === "done" && !it.rec.needsCorrection)) return;
+  const prev = {status: it.rec.status, needsCorrection: it.rec.needsCorrection};
+  commit(it, {status:"done", needsCorrection:false});
+  autoDone = {id: d.id, prev};
+  syncNow();
+  if (view.name !== "edit") render(false);
+  toast((it.rec.client || it.rec.program || it.rec.place || "기록") + " — 기존 시스템 등록을 확인해 입력 완료로 표시했습니다.");
+});
+function nextReady(exceptId){
+  return S.items.filter(it => it.rec.id !== exceptId && it.rec.status === "ready" && !it.theirs && (isAdmin() && view.owner === "all" || it.rec.owner === S.settings.name))
+    .sort((a,b) => (a.rec.date+a.rec.start).localeCompare(b.rec.date+b.rec.start))[0] || null;
+}
+
 /* ---------- offline support ---------- */
 let offlineReady = false;
 if ("serviceWorker" in navigator && isSecureContext && /^https?:$/.test(location.protocol)) {
@@ -979,6 +1003,7 @@ if ("serviceWorker" in navigator && isSecureContext && /^https?:$/.test(location
 function FILLER(){
 (function(){
 var F=document.transForm;
+var APP=(document.currentScript&&document.currentScript.src)?new URL(document.currentScript.src).origin:"*";
 var path=location.pathname,pageKind=/edu2_form\.php/.test(path)?"program":/edu_form\.php/.test(path)?"edu":/trans_form\.php/.test(path)?((F&&F.doc_type&&F.doc_type.value==="C")?"counsel":"trans"):"";
 var KN={trans:"통역",counsel:"상담",edu:"수어교육",program:"기타프로그램"},KS={trans:"통역관리",counsel:"상담관리",edu:"수어교육관리",program:"기타프로그램관리"};
 if(!F||!pageKind){alert("기존 통역·상담·수어교육·기타프로그램의 신규 작성 화면에서 눌러 주세요.");return;}
@@ -1002,7 +1027,7 @@ var P=dk==="counsel"?"상담":"수어통역",N=dk==="counsel"?"상담":"통역",
 var done=[],warn=[],todo=[];
 function mark(el){el.style.background="#fff3b0";el.style.outline="2px solid #e0a73a";}
 function text(name,val,label,max){var el=F.elements[name];if(!el){warn.push(label+": 입력칸을 찾지 못함");return;}if(val==null||val===""){return;}
- if(el.value&&el.value!==val&&name==="translater_nm")warn.push(PS+": 화면의 ‘"+el.value+"’을 ‘"+val+"’로 바꿈");
+ if(el.value&&el.value!==val&&(name==="translater_nm"||name==="teacher_nm"))warn.push((name==="teacher_nm"?"강사명":PS)+": 화면의 ‘"+el.value+"’을 ‘"+val+"’로 바꿈");
  if(max&&val.length>max)warn.push(label+": "+max+"자 제한보다 깁니다 ("+val.length+"자). 줄여 주세요.");
  el.value=val;mark(el);done.push(label);}
 function pick(name,label,val,map){var els=F.querySelectorAll("[name='"+name+"']"),hit=null;for(var i=0;i<els.length;i++){var lt=lab(els[i]);if(lt===val)hit=els[i];}
@@ -1056,7 +1081,13 @@ var dn=(d.deafNames||"").split(/[,，]/).map(function(s){return s.trim();}).filt
 if(dn.length)html+="<li>참석인원(농인) 선택: "+dn.map(function(n,i){return "<button type='button' class='ksl-person' data-kind='deaf' data-name='"+h(n)+"'>"+h(n)+"</button>";}).join(" ")+"</li>";
 if(hn.length)html+="<li>"+(dk==="edu"?"수강인원":dk==="program"?"프로그램실인원":"참석인원(청인)")+" 선택: "+hn.map(function(n){return "<button type='button' class='ksl-person' data-kind='hearing' data-name='"+h(n)+"'>"+h(n)+"</button>";}).join(" ")+"</li>";
 todo.forEach(function(x){html+="<li>"+h(x)+"</li>";});
-html+="<li>내용을 확인한 뒤 화면 아래 <b>등록</b>을 직접 누르세요.</li><li>앱으로 돌아가 <b>등록 완료로 표시</b>를 누르세요.</li></ol>";
+var linked=false;try{linked=!!(window.opener&&!window.opener.closed);}catch(x){linked=false;}
+html+="<li>내용을 확인한 뒤 화면 아래 <b>등록</b>을 직접 누르세요.</li>"+(linked?"<li>등록되면 앱에 <b>입력 완료</b>가 자동으로 표시됩니다.</li>":"<li>앱으로 돌아가 <b>등록 완료로 표시</b>를 누르세요. (앱의 ‘등록 화면 열기’로 연 화면이면 자동으로 표시됩니다.)</li>")+"</ol>";
+window.__kslFillId=d.id;window.__kslFillKind=dk;
+if(!F.__kslHooked){F.__kslHooked=true;
+ var notify=function(){var id=window.__kslFillId;if(!id||window.__kslNotified===id)return;window.__kslNotified=id;try{if(window.opener&&!window.opener.closed)window.opener.postMessage({k:"ksl-registered",id:id,kind:window.__kslFillKind},APP);}catch(x){}};
+ var nativeSubmit=F.submit;F.submit=function(){notify();return nativeSubmit.call(F);};
+ F.addEventListener("submit",function(e){setTimeout(function(){if(!e.defaultPrevented)notify();},0);});}
 out.innerHTML=html;ta.value="";ta.style.display="none";box.querySelector("p").style.display="none";
 var cb=box.querySelector(".ksl-client");if(cb)cb.onclick=function(){openPop("pop_deaf_list.php?person_type=&search_type=name&search="+encodeURIComponent(d.client||""),"target_member_detail");};
 Array.prototype.forEach.call(box.querySelectorAll(".ksl-person"),function(b){b.onclick=function(){

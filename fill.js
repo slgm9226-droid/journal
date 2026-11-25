@@ -1,6 +1,7 @@
 // 통역·상담·수어교육·기타프로그램 채우기 — 기존 협회 신규 작성 화면의 입력칸만 채웁니다. 등록 버튼은 누르지 않습니다.
 (function(){
 var F=document.transForm;
+var APP=(document.currentScript&&document.currentScript.src)?new URL(document.currentScript.src).origin:"*";
 var path=location.pathname,pageKind=/edu2_form\.php/.test(path)?"program":/edu_form\.php/.test(path)?"edu":/trans_form\.php/.test(path)?((F&&F.doc_type&&F.doc_type.value==="C")?"counsel":"trans"):"";
 var KN={trans:"통역",counsel:"상담",edu:"수어교육",program:"기타프로그램"},KS={trans:"통역관리",counsel:"상담관리",edu:"수어교육관리",program:"기타프로그램관리"};
 if(!F||!pageKind){alert("기존 통역·상담·수어교육·기타프로그램의 신규 작성 화면에서 눌러 주세요.");return;}
@@ -24,7 +25,7 @@ var P=dk==="counsel"?"상담":"수어통역",N=dk==="counsel"?"상담":"통역",
 var done=[],warn=[],todo=[];
 function mark(el){el.style.background="#fff3b0";el.style.outline="2px solid #e0a73a";}
 function text(name,val,label,max){var el=F.elements[name];if(!el){warn.push(label+": 입력칸을 찾지 못함");return;}if(val==null||val===""){return;}
- if(el.value&&el.value!==val&&name==="translater_nm")warn.push(PS+": 화면의 ‘"+el.value+"’을 ‘"+val+"’로 바꿈");
+ if(el.value&&el.value!==val&&(name==="translater_nm"||name==="teacher_nm"))warn.push((name==="teacher_nm"?"강사명":PS)+": 화면의 ‘"+el.value+"’을 ‘"+val+"’로 바꿈");
  if(max&&val.length>max)warn.push(label+": "+max+"자 제한보다 깁니다 ("+val.length+"자). 줄여 주세요.");
  el.value=val;mark(el);done.push(label);}
 function pick(name,label,val,map){var els=F.querySelectorAll("[name='"+name+"']"),hit=null;for(var i=0;i<els.length;i++){var lt=lab(els[i]);if(lt===val)hit=els[i];}
@@ -78,7 +79,13 @@ var dn=(d.deafNames||"").split(/[,，]/).map(function(s){return s.trim();}).filt
 if(dn.length)html+="<li>참석인원(농인) 선택: "+dn.map(function(n,i){return "<button type='button' class='ksl-person' data-kind='deaf' data-name='"+h(n)+"'>"+h(n)+"</button>";}).join(" ")+"</li>";
 if(hn.length)html+="<li>"+(dk==="edu"?"수강인원":dk==="program"?"프로그램실인원":"참석인원(청인)")+" 선택: "+hn.map(function(n){return "<button type='button' class='ksl-person' data-kind='hearing' data-name='"+h(n)+"'>"+h(n)+"</button>";}).join(" ")+"</li>";
 todo.forEach(function(x){html+="<li>"+h(x)+"</li>";});
-html+="<li>내용을 확인한 뒤 화면 아래 <b>등록</b>을 직접 누르세요.</li><li>앱으로 돌아가 <b>등록 완료로 표시</b>를 누르세요.</li></ol>";
+var linked=false;try{linked=!!(window.opener&&!window.opener.closed);}catch(x){linked=false;}
+html+="<li>내용을 확인한 뒤 화면 아래 <b>등록</b>을 직접 누르세요.</li>"+(linked?"<li>등록되면 앱에 <b>입력 완료</b>가 자동으로 표시됩니다.</li>":"<li>앱으로 돌아가 <b>등록 완료로 표시</b>를 누르세요. (앱의 ‘등록 화면 열기’로 연 화면이면 자동으로 표시됩니다.)</li>")+"</ol>";
+window.__kslFillId=d.id;window.__kslFillKind=dk;
+if(!F.__kslHooked){F.__kslHooked=true;
+ var notify=function(){var id=window.__kslFillId;if(!id||window.__kslNotified===id)return;window.__kslNotified=id;try{if(window.opener&&!window.opener.closed)window.opener.postMessage({k:"ksl-registered",id:id,kind:window.__kslFillKind},APP);}catch(x){}};
+ var nativeSubmit=F.submit;F.submit=function(){notify();return nativeSubmit.call(F);};
+ F.addEventListener("submit",function(e){setTimeout(function(){if(!e.defaultPrevented)notify();},0);});}
 out.innerHTML=html;ta.value="";ta.style.display="none";box.querySelector("p").style.display="none";
 var cb=box.querySelector(".ksl-client");if(cb)cb.onclick=function(){openPop("pop_deaf_list.php?person_type=&search_type=name&search="+encodeURIComponent(d.client||""),"target_member_detail");};
 Array.prototype.forEach.call(box.querySelectorAll(".ksl-person"),function(b){b.onclick=function(){
