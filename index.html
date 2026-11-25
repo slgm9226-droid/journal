@@ -141,6 +141,9 @@ ul.list .item[aria-current=true]{background:var(--pale);border-radius:10px}
 .f input:focus,.f textarea:focus,.time input:focus{border-color:var(--brand);outline:none;box-shadow:0 0 0 3px rgba(31,91,107,.18)}
 .empty{border:0;background:#f7f9fa}
 @media(max-width:420px){.bar h1 button{font-size:17px}.bar h1 button .home-mark{display:none}.new-row button.primary.big{font-size:15px;padding-left:10px}}
+.kind-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}.kind-head .kind-tag{margin:0}
+.kind-change{min-height:36px;padding:4px 12px;font-size:13px;border-radius:999px;background:#fff}
+.kind-pick{margin:0 0 14px;padding:12px;border:1px dashed var(--line,#d5dbe1);border-radius:12px;background:#f8fafb}
 .new-row-label{margin:2px 0 8px;color:var(--muted);font-size:14px;font-weight:700}
 .tabs{gap:6px;margin:12px 0 0}.tabs+.tabs{margin-top:8px}
 .tabs button{min-height:36px;padding:4px 12px;font-size:13px;border-radius:999px}
@@ -179,8 +182,8 @@ const OPT = {
   method:["수어,음성통역","중계통역","기타"],
   area:["행사통역","법률통역","교육통역","의료통역","방송통역","관공서통역","일상생활통역","취업알선통역","기타"]
 };
-const FIELDS = ["interpreter","date","start","end","place","program","division","request","consultType","targets","method","area","client","content","result","pendingResult","deafNames","hearingNames","aidTeacher","group","etcType","students"];
-const LABEL = {aidTeacher:"보조강사명",group:"단체명",etcType:"구분",students:"수강인원",consultType:"상담구분",interpreter:"수어통역사",date:"수어통역일",start:"시작 시각",end:"종료 시각",place:"수어통역장소",program:"프로그램명",division:"분류",request:"수어통역의뢰방법",targets:"수어통역대상",method:"수어통역방법",area:"수어통역영역",client:"의뢰인",content:"수어통역내용",result:"결과",pendingResult:"결과 미확정",deafNames:"참석인원(농인)",hearingNames:"참석인원(청인)",status:"상태"};
+const FIELDS = ["kind","interpreter","date","start","end","place","program","division","request","consultType","targets","method","area","client","content","result","pendingResult","deafNames","hearingNames","aidTeacher","group","etcType","students"];
+const LABEL = {kind:"종류",aidTeacher:"보조강사명",group:"단체명",etcType:"구분",students:"수강인원",consultType:"상담구분",interpreter:"수어통역사",date:"수어통역일",start:"시작 시각",end:"종료 시각",place:"수어통역장소",program:"프로그램명",division:"분류",request:"수어통역의뢰방법",targets:"수어통역대상",method:"수어통역방법",area:"수어통역영역",client:"의뢰인",content:"수어통역내용",result:"결과",pendingResult:"결과 미확정",deafNames:"참석인원(농인)",hearingNames:"참석인원(청인)",status:"상태"};
 const STATUS = {draft:"작성 중",ready:"입력 대기",done:"입력 완료"};
 const LIMIT = {place:40,result:200,interpreter:20,client:14};
 const AREA_HINTS = [
@@ -609,7 +612,7 @@ function eduEditHTML(item){
   (fresh && recent.length ? '<details class="panel" style="margin-bottom:12px"><summary style="font-weight:700;min-height:40px;cursor:pointer">이전 기록에서 불러오기 (같은 '+L.lecture+')</summary><p class="muted">'+L.lecture+'·단체명·장소·보조강사·'+(r.kind === "program" ? "구분·" : "")+L.people+'을 가져옵니다. 날짜·시간·내용·평가는 가져오지 않습니다.</p><div class="chips small">'+
     recent.map(it => '<button type="button" data-copyfrom="'+esc(it.rec.id)+'">'+esc([it.rec.program, it.rec.group].filter(Boolean).join(" · "))+' <span class="muted">'+esc(it.rec.date.slice(5))+'</span></button>').join("")+'</div></details>' : "")+
   '<form id="ed" class="panel" autocomplete="off" novalidate>'+
-  '<p class="kind-tag kind-'+r.kind+'">'+L.name+' 기록</p>'+
+  kindSwitchHTML(r)+
   '<h3 style="margin-top:0">언제 · 어디서</h3>'+
   '<div class="row"><label class="f">날짜<input type="date" name="date" value="'+esc(r.date)+'"></label>'+
   '<label class="f">'+L.person+'<input name="interpreter" maxlength="20" value="'+esc(r.interpreter)+'"></label></div>'+
@@ -633,6 +636,24 @@ function eduEditHTML(item){
   '<div class="bottom"><div class="actions" style="margin:0"><button type="button" class="primary" id="done-edit" style="flex:1;min-height:52px">저장하고 목록으로</button>'+
   (wide() ? '<button type="button" id="to-detail" style="min-height:52px">PC 입력 화면</button>' : "")+'<button type="button" class="danger" id="del-edit" style="min-height:52px">삭제</button></div></div>';
 }
+function kindSwitchHTML(r){
+  const k = KINDS[r.kind] ? r.kind : "trans";
+  return '<div class="kind-head"><p class="kind-tag kind-'+k+'">'+KINDS[k].name+' 기록</p>'+
+    '<button type="button" class="kind-change" id="kind-change" aria-expanded="false" aria-controls="kind-pick">종류 바꾸기</button></div>'+
+    '<div id="kind-pick" class="kind-pick" hidden><p class="muted" style="margin:0 0 6px">종류를 잘못 골랐다면 맞는 종류를 누르세요. 적은 내용은 그대로 옮겨집니다.</p><div class="chips">'+
+    KIND_ORDER.filter(x => x !== k).map(x => '<button type="button" data-kindto="'+x+'" style="border-left:4px solid var(--k-'+x+')">'+KINDS[x].name+'</button>').join("")+'</div></div>';
+}
+/* Change a record's kind. Shared fields carry over; choices that don't exist in the new kind are cleared. */
+function kindChanges(r, to){
+  const probe = {...r, kind:to};
+  const changes = {kind:to}, cleared = [];
+  const shape = blankRecordShape(); for (const k of Object.keys(shape)) if (r[k] === undefined) changes[k] = shape[k];
+  for (const k of ["division","request","method","area","consultType","etcType"]) {
+    if (r[k] && !(optsFor(probe,k) || []).includes(r[k])) { changes[k] = ""; cleared.push(k); }
+  }
+  if ((changes.method === "" || !r.method) && S.settings.defaultMethod !== false && KINDS[to].defaultMethod && !isEdu(probe)) changes.method = KINDS[to].defaultMethod;
+  return {changes, cleared};
+}
 function editHTML(item){
   if (isEdu(item.rec)) return eduEditHTML(item);
   const r = item.rec; const fresh = !hasContent(item);
@@ -645,7 +666,7 @@ function editHTML(item){
   (fresh && recent.length ? '<details class="panel" style="margin-bottom:12px"><summary style="font-weight:700;min-height:40px;cursor:pointer">이전 기록에서 불러오기 (같은 의뢰인·장소)</summary><p class="muted">장소·의뢰인·분류·의뢰방법·대상·방법·영역·프로그램명·참석자를 가져옵니다. 날짜·시간·내용·결과는 가져오지 않습니다.</p><div class="chips small">'+
     recent.map(it => '<button type="button" data-copyfrom="'+esc(it.rec.id)+'">'+esc([it.rec.client, it.rec.place].filter(Boolean).join(" · "))+' <span class="muted">'+esc(it.rec.date.slice(5))+'</span></button>').join("")+'</div></details>' : "")+
   '<form id="ed" class="panel" autocomplete="off" novalidate>'+
-  '<p class="kind-tag kind-'+(r.kind || "trans")+'">'+L.name+' 기록</p>'+
+  kindSwitchHTML(r)+
   '<h3 style="margin-top:0">언제 · 어디서</h3>'+
   '<div class="row"><label class="f">날짜<input type="date" name="date" value="'+esc(r.date)+'"></label>'+
   '<label class="f">'+L.person+'<input name="interpreter" maxlength="20" value="'+esc(r.interpreter)+'"></label></div>'+
@@ -755,6 +776,20 @@ function bindEdit(item){
       set(Object.fromEntries(keys.map(k => [k, clone(src[k])])));
       render(false); toast("이전 기록의 항목을 불러왔습니다. 날짜·시간·내용·결과를 입력하세요."); return;
     }
+    if (b.id === "kind-change") { const box = $("#kind-pick"); box.hidden = !box.hidden; b.setAttribute("aria-expanded", String(!box.hidden)); return; }
+    if (b.dataset.kindto) {
+      const r = item.rec, to = b.dataset.kindto; if (!KINDS[to] || to === r.kind) return;
+      const from = KINDS[r.kind] || KINDS.trans;
+      const {changes} = kindChanges(r, to);
+      let msg = from.name+" 기록을 "+KINDS[to].name+" 기록으로 바꿀까요?\n\n날짜·시간·장소·내용 등 적은 내용은 그대로 옮겨집니다. "+KINDS[to].name+"에만 있는 항목은 새로 채워야 합니다.";
+      if (r.status === "done") msg += "\n\n이 기록은 이미 기존 시스템에 '입력 완료'로 표시되어 있습니다. 기존 시스템의 "+from.sys+"에 잘못 등록된 건은 그곳에서 직접 지우고, 바꾼 기록을 "+KINDS[to].sys+"에 다시 등록하세요.";
+      if (!confirm(msg)) return;
+      if (r.status === "done") { changes.needsCorrection = false; changes.status = missing({...r, ...changes}).length ? "draft" : "ready"; }
+      commit(item, changes);
+      render(false);
+      toast(KINDS[to].name+" 기록으로 바꿨습니다."+(missing(item.rec).length ? " 남은 항목을 채워 주세요." : ""));
+      return;
+    }
     if (b.id === "del-edit") {
       const r = item.rec;
       if (!hasContent(item) && !r.start && !r.end) { S.items = S.items.filter(it => it !== item); persist(); go("list"); return; }
@@ -862,7 +897,7 @@ function bindDetail(item){
 }
 function conflictHTML(item){
   const mine = item.rec, theirs = item.theirs;
-  const show = (k,v) => k === "targets" ? v.join(", ") : k === "pendingResult" ? (v ? "예" : "아니오") : k === "status" ? (STATUS[v] || "삭제됨") : v;
+  const show = (k,v) => k === "kind" ? (KINDS[v] || KINDS.trans).name : k === "targets" ? v.join(", ") : k === "pendingResult" ? (v ? "예" : "아니오") : k === "status" ? (STATUS[v] || "삭제됨") : v;
   return '<h2 id="detail-h" tabindex="-1">두 기기에서 고친 내용 비교</h2>'+
     '<p class="muted">이 기기와 다른 기기(예: 사무실 PC)에서 같은 항목을 다르게 고쳤습니다. 항목마다 남길 내용을 고르세요.</p>'+
     '<form id="cf">'+item.conflicts.map(k => '<div class="diff"><b>'+esc(LABEL[k]||k)+'</b>'+
@@ -948,6 +983,7 @@ const HELP = [
   ["field", "현장에서 기록하기", '<ol><li>처음 화면에서 종류를 골라 누릅니다: <b>통역</b>, <b>상담</b>, <b>수어교육</b>, <b>기타프로그램</b> (‘새 기록’ 아래 단추). 종류마다 기존 시스템 화면에 맞는 항목이 나옵니다.</li>'+
     '<li><b>수어교육·기타프로그램</b>: 강좌명(프로그램명)·장소·내용이 필수이고, 기타프로그램은 구분(장애인식개선교육·문화여가프로그램)도 고릅니다. 수강인원은 이름을 추가해 두면 PC에서 선택할 때 씁니다. 매주 같은 수업은 <b>이전 기록에서 불러오기</b>를 쓰세요.</li>'+
     '<li>시작·종료는 <b>지금</b> 단추로 넣고, 장소·의뢰인·분류·의뢰방법·통역내용부터 적습니다. 나머지는 나중에 채워도 됩니다.</li>'+
+    '<li>종류를 잘못 골랐으면 작성 화면 맨 위 <b>종류 바꾸기</b>를 누르고 맞는 종류를 고릅니다. 날짜·시간·장소·내용은 그대로 옮겨지고, 그 종류에만 있는 항목만 새로 채우면 됩니다.</li>'+
     '<li>적는 대로 <b>자동 저장</b>됩니다. 따로 저장 단추를 누르지 않아도 됩니다.</li>'+
     '<li>어느 화면에서든 왼쪽 위 <b>업무일지 아이콘</b>을 누르면 처음 화면(기록 목록)으로 돌아갑니다.</li>'+
     '<li>맨 위 노란 띠에 <b>남은 항목</b>이 보입니다. 누르면 그 칸으로 이동합니다.</li>'+

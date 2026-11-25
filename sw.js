@@ -1,6 +1,6 @@
 // 수어센터 업무일지 오프라인 지원: 앱 화면을 휴대폰에 보관해 인터넷 없이도 열리게 합니다.
 // 기록은 구글 시트로 직접 보내며 여기에서 보관하지 않습니다.
-const CACHE = "ksl-journal-v3-2";
+const CACHE = "ksl-journal-v3-3";
 const SHELL = ["./", "./config.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 const scopeUrl = path => new URL(path, self.registration.scope).href;
 self.addEventListener("install", event => {
