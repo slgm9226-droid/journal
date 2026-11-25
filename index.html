@@ -87,6 +87,12 @@ input[type=date],input[type=time]{min-width:0;max-width:100%;-webkit-appearance:
 .bar h1 button{all:unset;display:inline-flex;align-items:center;gap:7px;min-height:44px;padding-right:6px;cursor:pointer;color:#fff;font-weight:800;border-radius:8px}
 .bar h1 button:focus-visible{outline:3px solid #9cc0ff;outline-offset:2px}
 .bar h1 button svg{flex:0 0 auto}.bar h1 button span{white-space:nowrap}.bar h1{flex:0 0 auto}.bar .sync{flex:1 1 auto;min-width:0;text-align:right}.bar button{white-space:nowrap;flex:0 0 auto}@media(max-width:360px){.bar h1{font-size:16px}.bar button{padding:5px 7px}}
+.new-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(min-width:900px){.new-row{grid-template-columns:1fr 1fr}}.new-row .big{font-size:16px;padding:8px 6px}
+button.primary.counsel{background:#11634d;border-color:#11634d}button.primary.edu{background:#6b3fa0;border-color:#6b3fa0}button.primary.program{background:#a4541b;border-color:#a4541b}
+.kind-mini.kind-edu{background:#efe6fb;color:#5b2f8f}.kind-mini.kind-program{background:#fbeadc;color:#8a4413}.kind-tag.kind-edu{color:#5b2f8f}.kind-tag.kind-program{color:#8a4413}
+.kind-mini{display:inline-block;font-size:12px;font-weight:800;border-radius:6px;padding:1px 6px;vertical-align:2px;background:#e9effd;color:#153d91}
+.kind-mini.kind-counsel{background:#def4e9;color:#11634d}
+.kind-tag{margin:0 0 4px;font-weight:800;font-size:14px;color:#153d91}.kind-tag.kind-counsel{color:#11634d}
 details.help{border-top:1px solid var(--line)}details.help:last-of-type{border-bottom:1px solid var(--line)}
 details.help summary{font-weight:700;min-height:50px;display:flex;align-items:center;cursor:pointer;font-size:16px}
 details.help>div{padding:0 0 12px;font-size:15px}details.help ol,details.help ul{padding-left:22px;margin:6px 0}details.help li{margin:5px 0}
@@ -100,7 +106,17 @@ details.help>div{padding:0 0 12px;font-size:15px}details.help ol,details.help ul
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script>
 "use strict";
-const FORM_URL = "http://www.kbdeaf.or.kr/trans_admin/trans_form.php?doc_type=R&sel_grp_code=";
+const FORM_URLS = {trans:"http://www.kbdeaf.or.kr/trans_admin/trans_form.php?doc_type=R&sel_grp_code=", counsel:"http://www.kbdeaf.or.kr/trans_admin/trans_form.php?doc_type=C&sel_grp_code=",
+  edu:"http://www.kbdeaf.or.kr/trans_admin/edu_form.php?doc_type=R", program:"http://www.kbdeaf.or.kr/trans_admin/edu2_form.php?doc_type=R"};
+const KINDS = {
+  trans:{name:"통역", sys:"통역관리", person:"수어통역사", date:"수어통역일", place:"수어통역장소", request:"수어통역의뢰방법", targets:"수어통역대상", method:"수어통역방법", area:"수어통역영역", content:"수어통역내용", contentPh:"예) 진료 중 증상 설명과 검사 안내를 통역함", defaultMethod:"수어,음성통역"},
+  edu:{name:"수어교육", sys:"수어교육관리", person:"강사명", date:"수어교육일", place:"교육장소", lecture:"강좌명", people:"수강인원", content:"수어교육내용", contentPh:"예) 지문자와 인사 표현을 익힘"},
+  program:{name:"기타프로그램", sys:"기타프로그램관리", person:"강사명", date:"프로그램일", place:"장소", lecture:"프로그램명", people:"프로그램실인원", content:"프로그램내용", contentPh:"예) 장애인식개선 교육 — 농인 문화와 의사소통 방법 소개"},
+  counsel:{name:"상담", sys:"상담관리", person:"상담사", date:"상담일", place:"상담장소", request:"상담의뢰방법", targets:"상담대상", method:"상담방법", area:"상담영역", content:"상담내용", contentPh:"예) 취업 면접 준비와 이력서 작성을 상담함", defaultMethod:"수어"}
+};
+const OPT_PROGRAM = {etcType:["장애인식개선교육","문화여가프로그램"]};
+const KIND_ORDER = ["trans","counsel","edu","program"];
+const OPT_COUNSEL = {method:["수어","음성","필기","중계","기타"], area:["행사상담","방송상담","법률상담","관공서상담","교육상담","일상생활상담","의료상담","기타"], consultType:["취업","사후관리","상담관리"]};
 const STORE_KEY = "ksl-journal-v3";
 const SCRIPT_URL = ((window.KSL_CONFIG || {}).scriptUrl || "").trim();
 const OPT = {
@@ -110,8 +126,8 @@ const OPT = {
   method:["수어,음성통역","중계통역","기타"],
   area:["행사통역","법률통역","교육통역","의료통역","방송통역","관공서통역","일상생활통역","취업알선통역","기타"]
 };
-const FIELDS = ["interpreter","date","start","end","place","program","division","request","targets","method","area","client","content","result","pendingResult","deafNames","hearingNames"];
-const LABEL = {interpreter:"수어통역사",date:"수어통역일",start:"시작 시각",end:"종료 시각",place:"수어통역장소",program:"프로그램명",division:"분류",request:"수어통역의뢰방법",targets:"수어통역대상",method:"수어통역방법",area:"수어통역영역",client:"의뢰인",content:"수어통역내용",result:"결과",pendingResult:"결과 미확정",deafNames:"참석인원(농인)",hearingNames:"참석인원(청인)",status:"상태"};
+const FIELDS = ["interpreter","date","start","end","place","program","division","request","consultType","targets","method","area","client","content","result","pendingResult","deafNames","hearingNames","aidTeacher","group","etcType","students"];
+const LABEL = {aidTeacher:"보조강사명",group:"단체명",etcType:"구분",students:"수강인원",consultType:"상담구분",interpreter:"수어통역사",date:"수어통역일",start:"시작 시각",end:"종료 시각",place:"수어통역장소",program:"프로그램명",division:"분류",request:"수어통역의뢰방법",targets:"수어통역대상",method:"수어통역방법",area:"수어통역영역",client:"의뢰인",content:"수어통역내용",result:"결과",pendingResult:"결과 미확정",deafNames:"참석인원(농인)",hearingNames:"참석인원(청인)",status:"상태"};
 const STATUS = {draft:"작성 중",ready:"입력 대기",done:"입력 완료"};
 const LIMIT = {place:40,result:200,interpreter:20,client:14};
 const AREA_HINTS = [
@@ -153,16 +169,29 @@ function weekday(date){
   const d = new Date(date+"T00:00:00Z"); if (isNaN(d) || d.toISOString().slice(0,10)!==date) return "";
   return "일월화수목금토"[d.getUTCDay()];
 }
+const isCounsel = r => !!r && r.kind === "counsel";
+const isEdu = r => !!r && (r.kind === "edu" || r.kind === "program");
+const kindOf = r => (r && KINDS[r.kind]) ? r.kind : "trans";
+const K = r => KINDS[kindOf(r)];
+const optsFor = (r, key) => (key === "etcType" ? OPT_PROGRAM.etcType : (isCounsel(r) && OPT_COUNSEL[key]) || OPT[key]);
+/* 수어교육·기타프로그램: 기존 화면은 총 분만 계산하고 자정 넘김을 받지 않습니다. */
+function eduMinutes(r){ const s = toMin(r.start), e = toMin(r.end); return s !== null && e !== null && e > s ? e - s : null; }
 function suggestArea(r){
   const text = [r.place,r.content,r.program].join(" ");
-  for (const [area,re] of AREA_HINTS) if (re.test(text)) return area;
+  for (const [area,re] of AREA_HINTS) if (re.test(text)) {
+    if (!isCounsel(r)) return area;
+    const c = area.replace(/통역$/, "상담");
+    if (OPT_COUNSEL.area.includes(c)) return c;
+  }
   return "";
 }
 
 /* ---------- record model ---------- */
-function blankRecord(){
-  return {id:makeId(), owner:S.settings.name, status:"draft", interpreter:S.settings.name, date:koreaDate(), start:"", end:"",
-    place:"", program:"", division:"", request:"", targets:S.settings.defaultTargets === false ? [] : ["농인","청인"], method:S.settings.defaultMethod === false ? "" : "수어,음성통역", area:"",
+function blankRecord(kind="trans"){
+  kind = KINDS[kind] ? kind : "trans";
+  if (kind === "edu" || kind === "program") return {...blankRecordShape(), id:makeId(), kind, owner:S.settings.name, interpreter:S.settings.name, date:koreaDate(), created:nowIso(), updated:nowIso()};
+  return {id:makeId(), kind, owner:S.settings.name, status:"draft", interpreter:S.settings.name, date:koreaDate(), start:"", end:"",
+    place:"", program:"", division:"", request:"", consultType:"", targets:S.settings.defaultTargets === false ? [] : ["농인","청인"], method:S.settings.defaultMethod === false ? "" : KINDS[kind].defaultMethod, area:"",
     client:"", content:"", result:"", pendingResult:false, deafNames:"", hearingNames:"", needsCorrection:false,
     created:nowIso(), updated:nowIso(), rev:""};
 }
@@ -171,31 +200,51 @@ function normalize(v){
   const r = blankRecordShape();
   for (const k of Object.keys(r)) if (typeof r[k] === typeof v[k]) r[k] = v[k];
   r.id = v.id;
-  for (const k of ["division","request","method","area"]) if (r[k] && !OPT[k].includes(r[k])) r[k] = "";
+  r.kind = KINDS[v.kind] ? v.kind : "trans";
+  for (const k of ["division","request","method","area","consultType","etcType"]) if (r[k] && !(optsFor(r,k) || []).includes(r[k])) r[k] = "";
   r.targets = OPT.targets.filter(t => Array.isArray(v.targets) && v.targets.includes(t));
   if (!["draft","ready","done","deleted"].includes(r.status)) r.status = "draft";
   for (const k of Object.keys(r)) if (typeof r[k] === "string") r[k] = r[k].slice(0,4000);
   return r;
 }
-function blankRecordShape(){ return {id:"",owner:"",status:"draft",interpreter:"",date:"",start:"",end:"",place:"",program:"",division:"",request:"",targets:[],method:"",area:"",client:"",content:"",result:"",pendingResult:false,deafNames:"",hearingNames:"",needsCorrection:false,created:"",updated:"",rev:""}; }
+function blankRecordShape(){ return {id:"",kind:"trans",consultType:"",aidTeacher:"",group:"",etcType:"",students:"",owner:"",status:"draft",interpreter:"",date:"",start:"",end:"",place:"",program:"",division:"",request:"",targets:[],method:"",area:"",client:"",content:"",result:"",pendingResult:false,deafNames:"",hearingNames:"",needsCorrection:false,created:"",updated:"",rev:""}; }
 function missing(r){
   const m = [];
-  if (!r.interpreter.trim()) m.push(["interpreter","수어통역사"]);
-  if (!weekday(r.date)) m.push(["date","수어통역일"]);
+  const L = K(r);
+  if (isEdu(r)) {
+    if (!r.interpreter.trim()) m.push(["interpreter",L.person]);
+    if (!weekday(r.date)) m.push(["date",L.date]);
+    if (eduMinutes(r) === null) m.push(["start","시작·종료 시각"]);
+    if (!r.program.trim()) m.push(["program",L.lecture]);
+    if (!r.place.trim()) m.push(["place",L.place]);
+    if (r.kind === "program" && !r.etcType) m.push(["etcType","구분"]);
+    if (!r.content.trim()) m.push(["content",L.content]);
+    return m;
+  }
+  if (!r.interpreter.trim()) m.push(["interpreter",L.person]);
+  if (!weekday(r.date)) m.push(["date",L.date]);
   if (!timeInfo(r)) m.push(["start","시작·종료 시각"]);
   if (!r.place.trim()) m.push(["place","장소"]);
   if (!r.client.trim()) m.push(["client","의뢰인"]);
   if (!r.division) m.push(["division","분류"]);
   if (!r.request) m.push(["request","의뢰방법"]);
-  if (!r.area) m.push(["area","통역영역"]);
-  if (!r.targets.length) m.push(["targets","통역대상"]);
-  if (!r.method) m.push(["method","통역방법"]);
-  if (!r.content.trim()) m.push(["content","통역내용"]);
+  if (!r.area) m.push(["area",L.name+"영역"]);
+  if (!r.targets.length) m.push(["targets",L.name+"대상"]);
+  if (!r.method) m.push(["method",L.name+"방법"]);
+  if (!r.content.trim()) m.push(["content",L.name+"내용"]);
   if (!r.result.trim() && !r.pendingResult) m.push(["result","결과"]);
   return m;
 }
 function warnings(r){
   const w = [];
+  if (isEdu(r)) {
+    const L = K(r);
+    for (const [k,label,max] of [["place",L.place,70],["program",L.lecture,40],["group","단체명",40],["aidTeacher","보조강사명",40],["interpreter","강사명",20]])
+      if (r[k].length > max) w.push(label+"이(가) "+max+"자를 넘습니다 (기존 시스템 제한)");
+    const s = toMin(r.start), e = toMin(r.end);
+    if (s !== null && e !== null && e <= s) w.push("종료 시각은 시작보다 늦어야 합니다 (자정을 넘길 수 없음)");
+    return w;
+  }
   if (r.place.length > LIMIT.place) w.push("장소가 "+LIMIT.place+"자를 넘습니다 (기존 시스템 제한)");
   if (r.result.length > LIMIT.result) w.push("결과가 "+LIMIT.result+"자를 넘습니다 (기존 시스템 제한)");
   if (r.interpreter.length > LIMIT.interpreter) w.push("통역사 이름이 너무 깁니다");
@@ -372,7 +421,7 @@ addEventListener("beforeinstallprompt", e => { e.preventDefault(); installPrompt
 const inviteLink = code => location.origin + location.pathname.replace(/index\.html$/, "") + "#c=" + code;
 
 /* ---------- UI state ---------- */
-let view = {name:"list", id:null, filter:"active", owner:"mine", message:""};
+let view = {name:"list", id:null, filter:"active", owner:"mine", kind:"all", message:""};
 let editClick = null, lastWide = wide();
 let toastTimer;
 function toast(msg){ clearTimeout(toastTimer); $("#toast").textContent = msg; toastTimer = setTimeout(() => $("#toast").textContent = "", 4500); }
@@ -444,29 +493,35 @@ function bindInstall(){
 
 /* ---------- list ---------- */
 function listHTML(){
-  const all = visibleItems().filter(it => view.owner === "all" || !isAdmin() || it.rec.owner === S.settings.name || it.dirty);
+  const mine = visibleItems().filter(it => view.owner === "all" || !isAdmin() || it.rec.owner === S.settings.name || it.dirty);
+  const kindsHere = KIND_ORDER.filter(k => mine.some(it => kindOf(it.rec) === k));
+  if (view.kind !== "all" && !kindsHere.includes(view.kind)) view.kind = "all";
+  const all = mine.filter(it => view.kind === "all" || kindOf(it.rec) === view.kind);
   const groups = {active: all.filter(it => it.rec.status !== "done" || it.rec.needsCorrection || it.theirs), done: all.filter(it => it.rec.status === "done" && !it.rec.needsCorrection && !it.theirs)};
   const shown = groups[view.filter].sort((a,b) => (b.rec.date+b.rec.start).localeCompare(a.rec.date+a.rec.start) || b.rec.updated.localeCompare(a.rec.updated));
   const ready = groups.active.filter(it => it.rec.status === "ready").length;
   return '<h2 id="list-h" tabindex="-1">'+esc(S.settings.name)+'님 기록</h2>'+
-    '<button type="button" class="primary big" id="new">＋ 새 통역 기록</button>'+
+    '<div class="new-row"><button type="button" class="primary big" id="new">＋ 통역</button><button type="button" class="primary big counsel" id="new-counsel">＋ 상담</button><button type="button" class="primary big edu" id="new-edu">＋ 수어교육</button><button type="button" class="primary big program" id="new-program">＋ 기타프로그램</button></div>'+
     (storageOk ? "" : '<p class="note">이 브라우저에 저장할 수 없습니다. 사생활 보호 모드인지 확인하세요.</p>')+
     (isAdmin() ? '<div class="tabs" role="group" aria-label="통역사"><button type="button" data-owner="mine" aria-pressed="'+(view.owner==="mine")+'">내 기록</button><button type="button" data-owner="all" aria-pressed="'+(view.owner==="all")+'">모든 통역사</button></div>' : "")+
+    (kindsHere.length > 1 ? '<div class="tabs" role="group" aria-label="기록 종류"><button type="button" data-kind="all" aria-pressed="'+(view.kind==="all")+'">전체</button>'+kindsHere.map(k => '<button type="button" data-kind="'+k+'" aria-pressed="'+(view.kind===k)+'">'+KINDS[k].name+'</button>').join("")+'</div>' : "")+
     '<div class="tabs" role="group" aria-label="기록 상태"><button type="button" data-filter="active" aria-pressed="'+(view.filter==="active")+'">진행 중 '+groups.active.length+(ready ? " · 입력 대기 "+ready : "")+'</button><button type="button" data-filter="done" aria-pressed="'+(view.filter==="done")+'">입력 완료 '+groups.done.length+'</button></div>'+
     (shown.length ? '<ul class="list">'+shown.map(it => {
       const r = it.rec; const miss = missing(r);
       const chip = it.theirs ? '<span class="chip warn">비교 필요</span>' : r.needsCorrection ? '<span class="chip warn">수정 반영 필요</span>' :
         '<span class="chip '+r.status+'">'+STATUS[r.status]+(r.status==="draft" && miss.length ? " · "+(miss.length <= 2 ? miss.map(m => m[1]).join(", ")+" 남음" : miss.length+"개 남음") : "")+'</span>';
-      const sub = [r.date ? r.date.slice(5).replace("-","/")+"("+weekday(r.date)+")" : "", r.start && r.end ? r.start+"~"+r.end : "", r.division, r.area, r.owner !== S.settings.name ? r.owner : "", it.dirty ? "저장 대기" : ""].filter(Boolean).join(" · ");
-      return '<li><button type="button" class="item" data-open="'+esc(r.id)+'" aria-current="'+(view.id===r.id)+'"><span>'+esc(r.client || r.place || r.content.slice(0,24) || "제목 없는 기록")+(r.place && r.client ? " · "+esc(r.place) : "")+'</span>'+chip+'<small>'+esc(sub)+'</small></button></li>';
-    }).join("")+'</ul>' : (view.filter==="active" && !visibleItems().length ? '<div class="empty"><p style="margin:0 0 10px">아직 기록이 없습니다. 통역이 끝나면 <b>＋ 새 통역 기록</b>을 누르세요.</p><button type="button" id="first-help">사용방법 보기</button></div>' :
+      const sub = [r.date ? r.date.slice(5).replace("-","/")+"("+weekday(r.date)+")" : "", r.start && r.end ? r.start+"~"+r.end : "", isEdu(r) ? r.etcType : r.division, isEdu(r) ? (splitNames(r.students).length ? splitNames(r.students).length+"명" : "") : r.area, r.owner !== S.settings.name ? r.owner : "", it.dirty ? "저장 대기" : ""].filter(Boolean).join(" · ");
+      return '<li><button type="button" class="item" data-open="'+esc(r.id)+'" aria-current="'+(view.id===r.id)+'"><span><span class="kind-mini kind-'+kindOf(r)+'">'+K(r).name+'</span> '+(isEdu(r) ? esc(r.program || r.group || r.place || "제목 없는 기록")+(r.group && r.program ? " · "+esc(r.group) : "") : esc(r.client || r.place || r.content.slice(0,24) || "제목 없는 기록")+(r.place && r.client ? " · "+esc(r.place) : ""))+'</span>'+chip+'<small>'+esc(sub)+'</small></button></li>';
+    }).join("")+'</ul>' : (view.filter==="active" && !visibleItems().length ? '<div class="empty"><p style="margin:0 0 10px">아직 기록이 없습니다. 통역·상담·수어교육·기타프로그램이 끝나면 위의 <b>＋</b> 단추에서 종류를 골라 기록하세요.</p><button type="button" id="first-help">사용방법 보기</button></div>' :
       '<p class="empty">'+(view.filter==="active" ? "진행 중인 기록이 없습니다." : "입력 완료한 기록이 없습니다.")+'</p>'));
 }
 function bindList(){
-  $("#new")?.addEventListener("click", () => {
-    const item = {rec:blankRecord(), base:null, dirty:false, theirs:null, conflicts:[]};
-    S.items.push(item); go("edit", item.rec.id);
-  });
+  const startNew = kind => { const item = {rec:blankRecord(kind), base:null, dirty:false, theirs:null, conflicts:[]}; S.items.push(item); go("edit", item.rec.id); };
+  $("#new")?.addEventListener("click", () => startNew("trans"));
+  $("#new-counsel")?.addEventListener("click", () => startNew("counsel"));
+  $("#new-edu")?.addEventListener("click", () => startNew("edu"));
+  $("#new-program")?.addEventListener("click", () => startNew("program"));
+  document.querySelectorAll("[data-kind]").forEach(b => b.onclick = () => { view.kind = b.dataset.kind; render(false); });
   $("#first-help")?.addEventListener("click", () => go("help"));
   document.querySelectorAll("[data-filter]").forEach(b => b.onclick = () => { view.filter = b.dataset.filter; render(false); });
   document.querySelectorAll("[data-owner]").forEach(b => b.onclick = () => { view.owner = b.dataset.owner; render(false); });
@@ -477,8 +532,8 @@ function bindList(){
 }
 
 /* ---------- edit (phone-first single form) ---------- */
-function chipsHTML(key, multi, suggestion){
-  return '<div class="chips" role="group" aria-labelledby="lg-'+key+'">'+OPT[key].map(o =>
+function chipsHTML(key, multi, suggestion, rec){
+  return '<div class="chips" role="group" aria-labelledby="lg-'+key+'">'+optsFor(rec, key).map(o =>
     '<button type="button" data-chip="'+key+'" data-value="'+esc(o)+'" class="'+(suggestion===o ? "suggest" : "")+'" aria-pressed="false">'+esc(o)+(suggestion===o ? " · 추천" : "")+'</button>').join("")+'</div>';
 }
 function recentValues(key, limit=6){
@@ -491,19 +546,56 @@ function recentValues(key, limit=6){
   return out;
 }
 function hasContent(item){ return item.dirty || item.base || item.rec.content || item.rec.place || item.rec.client; }
+function eduEditHTML(item){
+  const r = item.rec; const L = K(r); const fresh = !hasContent(item);
+  const recent = S.items.filter(it => it !== item && it.rec.owner === S.settings.name && it.rec.status !== "deleted" && it.rec.kind === r.kind && (it.rec.program || it.rec.group)).sort((a,b) => b.rec.updated.localeCompare(a.rec.updated)).slice(0,8);
+  const places = [...new Set(["센터", ...recentValues("place")])].slice(0,7);
+  const lectures = recentValues("program");
+  return '<h2 tabindex="-1" class="sr">'+L.name+' 기록 작성</h2>'+
+  '<div class="sticky-top" id="state"></div>'+
+  (fresh && recent.length ? '<details class="panel" style="margin-bottom:12px"><summary style="font-weight:700;min-height:40px;cursor:pointer">이전 기록에서 불러오기 (같은 '+L.lecture+')</summary><p class="muted">'+L.lecture+'·단체명·장소·보조강사·'+(r.kind === "program" ? "구분·" : "")+L.people+'을 가져옵니다. 날짜·시간·내용·평가는 가져오지 않습니다.</p><div class="chips small">'+
+    recent.map(it => '<button type="button" data-copyfrom="'+esc(it.rec.id)+'">'+esc([it.rec.program, it.rec.group].filter(Boolean).join(" · "))+' <span class="muted">'+esc(it.rec.date.slice(5))+'</span></button>').join("")+'</div></details>' : "")+
+  '<form id="ed" class="panel" autocomplete="off" novalidate>'+
+  '<p class="kind-tag kind-'+r.kind+'">'+L.name+' 기록</p>'+
+  '<h3 style="margin-top:0">언제 · 어디서</h3>'+
+  '<div class="row"><label class="f">날짜<input type="date" name="date" value="'+esc(r.date)+'"></label>'+
+  '<label class="f">'+L.person+'<input name="interpreter" maxlength="20" value="'+esc(r.interpreter)+'"></label></div>'+
+  '<div class="row times"><div><label class="f" for="t-start">시작</label><div class="time"><input id="t-start" type="time" name="start" value="'+esc(r.start)+'"><button type="button" data-now="start">지금</button></div></div>'+
+  '<div><label class="f" for="t-end">종료</label><div class="time"><input id="t-end" type="time" name="end" value="'+esc(r.end)+'"><button type="button" data-now="end">지금</button></div></div></div>'+
+  '<p class="calc" id="calc"></p>'+
+  '<label class="f">'+L.place+'<input name="place" maxlength="80" value="'+esc(r.place)+'"></label>'+
+  '<div class="chips small" style="margin-top:6px">'+places.map(p => '<button type="button" data-set="place" data-value="'+esc(p)+'">'+esc(p)+'</button>').join("")+'</div>'+
+  '<h3>'+L.name+'</h3>'+
+  '<label class="f">'+L.lecture+'<input name="program" maxlength="60" value="'+esc(r.program)+'"></label>'+
+  (lectures.length ? '<div class="chips small" style="margin-top:6px">'+lectures.map(c => '<button type="button" data-set="program" data-value="'+esc(c)+'">'+esc(c)+'</button>').join("")+'</div>' : "")+
+  (r.kind === "program" ? '<fieldset><legend id="lg-etcType" class="req">구분</legend>'+chipsHTML("etcType",false,"",r)+'</fieldset>' : "")+
+  '<label class="f">단체명 <span class="muted">(선택)</span><input name="group" maxlength="60" value="'+esc(r.group)+'"></label>'+
+  '<label class="f">보조강사명 <span class="muted">(선택)</span><input name="aidTeacher" maxlength="60" value="'+esc(r.aidTeacher)+'"></label>'+
+  '<label class="f">'+L.content+'<textarea name="content" maxlength="4000" placeholder="'+esc(L.contentPh)+'">'+esc(r.content)+'</textarea></label>'+
+  '<label class="f">평가 <span class="muted">(선택)</span><textarea name="result" maxlength="2000" placeholder="예) 참여도가 높았음">'+esc(r.result)+'</textarea></label>'+
+  '<h3>'+L.people+' <span class="muted" style="font-weight:500">(선택)</span></h3>'+
+  '<p class="muted" style="margin:0">기존 화면의 '+L.people+'에서 고를 이름입니다.</p>'+
+  '<div id="people-students"></div>'+
+  '</form>'+
+  '<div class="bottom"><div class="actions" style="margin:0"><button type="button" class="primary" id="done-edit" style="flex:1;min-height:52px">저장하고 목록으로</button>'+
+  (wide() ? '<button type="button" id="to-detail" style="min-height:52px">PC 입력 화면</button>' : "")+'<button type="button" class="danger" id="del-edit" style="min-height:52px">삭제</button></div></div>';
+}
 function editHTML(item){
+  if (isEdu(item.rec)) return eduEditHTML(item);
   const r = item.rec; const fresh = !hasContent(item);
-  const recent = S.items.filter(it => it !== item && it.rec.owner === S.settings.name && it.rec.status !== "deleted" && (it.rec.client || it.rec.place)).sort((a,b) => b.rec.updated.localeCompare(a.rec.updated)).slice(0,8);
+  const L = K(r);
+  const recent = S.items.filter(it => it !== item && it.rec.owner === S.settings.name && it.rec.status !== "deleted" && (it.rec.kind || "trans") === (r.kind || "trans") && (it.rec.client || it.rec.place)).sort((a,b) => b.rec.updated.localeCompare(a.rec.updated)).slice(0,8);
   const places = [...new Set(["센터", ...recentValues("place")])].slice(0,7);
   const clients = recentValues("client");
-  return '<h2 tabindex="-1" class="sr">통역 기록 작성</h2>'+
+  return '<h2 tabindex="-1" class="sr">'+L.name+' 기록 작성</h2>'+
   '<div class="sticky-top" id="state"></div>'+
   (fresh && recent.length ? '<details class="panel" style="margin-bottom:12px"><summary style="font-weight:700;min-height:40px;cursor:pointer">이전 기록에서 불러오기 (같은 의뢰인·장소)</summary><p class="muted">장소·의뢰인·분류·의뢰방법·대상·방법·영역·프로그램명·참석자를 가져옵니다. 날짜·시간·내용·결과는 가져오지 않습니다.</p><div class="chips small">'+
     recent.map(it => '<button type="button" data-copyfrom="'+esc(it.rec.id)+'">'+esc([it.rec.client, it.rec.place].filter(Boolean).join(" · "))+' <span class="muted">'+esc(it.rec.date.slice(5))+'</span></button>').join("")+'</div></details>' : "")+
   '<form id="ed" class="panel" autocomplete="off" novalidate>'+
+  '<p class="kind-tag kind-'+(r.kind || "trans")+'">'+L.name+' 기록</p>'+
   '<h3 style="margin-top:0">언제 · 어디서</h3>'+
   '<div class="row"><label class="f">날짜<input type="date" name="date" value="'+esc(r.date)+'"></label>'+
-  '<label class="f">수어통역사<input name="interpreter" maxlength="20" value="'+esc(r.interpreter)+'"></label></div>'+
+  '<label class="f">'+L.person+'<input name="interpreter" maxlength="20" value="'+esc(r.interpreter)+'"></label></div>'+
   '<div class="row times"><div><label class="f" for="t-start">시작</label><div class="time"><input id="t-start" type="time" name="start" value="'+esc(r.start)+'"><button type="button" data-now="start">지금</button></div></div>'+
   '<div><label class="f" for="t-end">종료</label><div class="time"><input id="t-end" type="time" name="end" value="'+esc(r.end)+'"><button type="button" data-now="end">지금</button></div></div></div>'+
   '<p class="calc" id="calc"></p>'+
@@ -512,13 +604,14 @@ function editHTML(item){
   '<h3>의뢰</h3>'+
   '<label class="f">의뢰인 <span class="muted">(기존 시스템 검색용 이름)</span><input name="client" maxlength="40" value="'+esc(r.client)+'"></label>'+
   (clients.length ? '<div class="chips small" style="margin-top:6px">'+clients.map(c => '<button type="button" data-set="client" data-value="'+esc(c)+'">'+esc(c)+'</button>').join("")+'</div>' : "")+
-  '<fieldset><legend id="lg-division" class="req">분류</legend>'+chipsHTML("division")+'</fieldset>'+
-  '<fieldset><legend id="lg-request" class="req">의뢰방법</legend>'+chipsHTML("request")+'</fieldset>'+
-  '<h3>통역</h3>'+
-  '<label class="f">수어통역내용<textarea name="content" maxlength="4000" placeholder="예) 진료 중 증상 설명과 검사 안내를 통역함">'+esc(r.content)+'</textarea></label>'+
-  '<fieldset><legend id="lg-area" class="req">수어통역영역</legend><div id="area-chips"></div></fieldset>'+
-  '<fieldset><legend id="lg-targets" class="req">수어통역대상 <span class="muted">(여러 개 선택 가능)</span></legend>'+chipsHTML("targets")+'</fieldset>'+
-  '<fieldset><legend id="lg-method" class="req">수어통역방법</legend>'+chipsHTML("method")+'</fieldset>'+
+  '<fieldset><legend id="lg-division" class="req">분류</legend>'+chipsHTML("division",false,"",r)+'</fieldset>'+
+  '<fieldset><legend id="lg-request" class="req">의뢰방법</legend>'+chipsHTML("request",false,"",r)+'</fieldset>'+
+  (isCounsel(r) ? '<fieldset><legend id="lg-consultType">상담구분 <span class="muted">(선택)</span></legend>'+chipsHTML("consultType",false,"",r)+'</fieldset>' : "")+
+  '<h3>'+L.name+'</h3>'+
+  '<label class="f">'+L.content+'<textarea name="content" maxlength="4000" placeholder="'+esc(L.contentPh)+'">'+esc(r.content)+'</textarea></label>'+
+  '<fieldset><legend id="lg-area" class="req">'+L.area+'</legend><div id="area-chips"></div></fieldset>'+
+  '<fieldset><legend id="lg-targets" class="req">'+L.targets+' <span class="muted">(여러 개 선택 가능)</span></legend>'+chipsHTML("targets",false,"",r)+'</fieldset>'+
+  '<fieldset><legend id="lg-method" class="req">'+L.method+'</legend>'+chipsHTML("method",false,"",r)+'</fieldset>'+
   '<h3>결과</h3>'+
   '<label class="f">결과<textarea name="result" maxlength="1000" placeholder="예) 다음 진료를 예약함">'+esc(r.result)+'</textarea></label><div class="counter" id="result-count"></div>'+
   '<label style="display:flex;gap:8px;align-items:center;min-height:44px;font-size:15px"><input type="checkbox" name="pendingResult" style="width:22px;height:22px"'+(r.pendingResult ? " checked" : "")+'>결과 미확정 · 나중에 확인</label>'+
@@ -544,9 +637,10 @@ function recentPeople(key, exclude){
 }
 function peopleHTML(r, key){
   const names = splitNames(r[key]); const recent = recentPeople(key, names);
-  return '<div class="f" style="margin-top:12px"><b>'+PEOPLE[key]+'</b> <span class="muted">'+(names.length ? names.length+"명" : "없음")+'</span></div>'+
+  const plabel = key === "students" ? K(r).people : PEOPLE[key];
+  return '<div class="f" style="margin-top:12px"><b>'+plabel+'</b> <span class="muted">'+(names.length ? names.length+"명" : "없음")+'</span></div>'+
     (names.length ? '<div class="chips" style="margin-top:6px">'+names.map(n => '<button type="button" class="person" data-person-rm="'+key+'" data-value="'+esc(n)+'" aria-label="'+esc(n)+' 빼기">'+esc(n)+' <span aria-hidden="true">×</span></button>').join("")+'</div>' : "")+
-    '<div class="time" style="margin-top:6px"><input data-person-input="'+key+'" maxlength="20" placeholder="이름 입력" aria-label="'+PEOPLE[key]+' 이름" enterkeyhint="done"><button type="button" data-person-add="'+key+'">추가</button></div>'+
+    '<div class="time" style="margin-top:6px"><input data-person-input="'+key+'" maxlength="20" placeholder="이름 입력" aria-label="'+plabel+' 이름" enterkeyhint="done"><button type="button" data-person-add="'+key+'">추가</button></div>'+
     (recent.length ? '<div class="chips small" style="margin-top:6px">'+recent.map(n => '<button type="button" data-person-pick="'+key+'" data-value="'+esc(n)+'">＋ '+esc(n)+'</button>').join("")+'</div>' : "");
 }
 function bindEdit(item){
@@ -557,14 +651,14 @@ function bindEdit(item){
       const k = b.dataset.chip, v = b.dataset.value;
       b.setAttribute("aria-pressed", String(k === "targets" ? r.targets.includes(v) : r[k] === v));
     });
-    const info = timeInfo(r);
-    $("#calc").textContent = info ? "총 "+info.total+"분"+(info.overnight ? " (다음 날 "+r.end+" 종료)" : "")+" · "+["새벽","오전","오후","저녁"].map((n,i) => info.bands[i] ? n+" "+info.bands[i]+"분" : "").filter(Boolean).join(", ")+" — 기존 시스템과 같은 기준" :
+    const info = isEdu(r) ? null : timeInfo(r);
+    if (isEdu(r)) { const mins = eduMinutes(r); $("#calc").textContent = mins !== null ? "총 "+mins+"분 — 기존 화면과 같은 계산" : r.start && r.end ? "종료 시각은 시작보다 늦어야 합니다 (자정을 넘길 수 없음)." : "시작·종료를 입력하면 총 시간을 계산합니다."; }
+    else $("#calc").textContent = info ? "총 "+info.total+"분"+(info.overnight ? " (다음 날 "+r.end+" 종료)" : "")+" · "+["새벽","오전","오후","저녁"].map((n,i) => info.bands[i] ? n+" "+info.bands[i]+"분" : "").filter(Boolean).join(", ")+" — 기존 시스템과 같은 기준" :
       r.start && r.end ? "시작과 종료 시각이 같습니다." : "시작·종료를 입력하면 시간대별 분을 계산합니다.";
-    const sug = r.area ? "" : suggestArea(r);
-    const area = $("#area-chips"); area.innerHTML = chipsHTML("area", false, sug);
-    area.querySelectorAll("[data-chip]").forEach(b => b.setAttribute("aria-pressed", String(r.area === b.dataset.value)));
-    for (const key of Object.keys(PEOPLE)) { const box = $("#people-"+key); const typed = box.querySelector("input")?.value || ""; const had = box.contains(document.activeElement) && document.activeElement.matches("[data-person-input]"); box.innerHTML = peopleHTML(r, key); const inp = box.querySelector("input"); inp.value = typed; if (had) inp.focus(); }
-    const rc = $("#result-count"); rc.textContent = r.result.length + " / " + LIMIT.result + "자"; rc.className = "counter" + (r.result.length > LIMIT.result ? " over" : "");
+    const area = $("#area-chips");
+    if (area) { const sug = r.area ? "" : suggestArea(r); area.innerHTML = chipsHTML("area", false, sug, r); area.querySelectorAll("[data-chip]").forEach(b => b.setAttribute("aria-pressed", String(r.area === b.dataset.value))); }
+    for (const key of [...Object.keys(PEOPLE), "students"]) { const box = $("#people-"+key); if (!box) continue; const typed = box.querySelector("input")?.value || ""; const had = box.contains(document.activeElement) && document.activeElement.matches("[data-person-input]"); box.innerHTML = peopleHTML(r, key); const inp = box.querySelector("input"); inp.value = typed; if (had) inp.focus(); }
+    const rc = $("#result-count"); if (rc) rc.textContent = r.result.length + " / " + LIMIT.result + "자"; if (rc) rc.className = "counter" + (r.result.length > LIMIT.result ? " over" : "");
     const miss = missing(r), warn = warnings(r);
     $("#state").innerHTML = miss.length ? '<button type="button" class="missing" id="jump">남은 항목 '+miss.length+'개: '+esc(miss.map(m => m[1]).join(", "))+' →</button>' :
       '<div class="complete">모든 필수 항목 입력 · '+(r.status === "done" ? (r.needsCorrection ? "입력 완료 건 수정됨 (기존 시스템 반영 필요)" : "입력 완료") : "입력 대기")+(warn.length ? '<br><span style="font-weight:500">'+esc(warn.join(" · "))+'</span>' : "")+'</div>';
@@ -604,7 +698,7 @@ function bindEdit(item){
     if (b.dataset.now) { const v = koreaTime(); form[b.dataset.now].value = v; set({[b.dataset.now]: v}); return; }
     if (b.dataset.copyfrom) {
       const src = findItem(b.dataset.copyfrom)?.rec; if (!src) return;
-      const keys = ["place","client","division","request","targets","method","area","program","deafNames","hearingNames"];
+      const keys = isEdu(item.rec) ? ["program","group","place","aidTeacher","etcType","students"] : ["place","client","division","request","consultType","targets","method","area","program","deafNames","hearingNames"];
       set(Object.fromEntries(keys.map(k => [k, clone(src[k])])));
       render(false); toast("이전 기록의 항목을 불러왔습니다. 날짜·시간·내용·결과를 입력하세요."); return;
     }
@@ -633,32 +727,39 @@ function bindEdit(item){
 /* ---------- detail / PC entry ---------- */
 function fillPayload(r){
   const info = timeInfo(r);
-  return JSON.stringify({k:"ksl-fill", v:1, id:r.id, interpreter:r.interpreter, date:r.date, start:r.start, end:r.end,
+  return JSON.stringify({k:"ksl-fill", v:3, kind:kindOf(r), consultType:r.consultType, aidTeacher:r.aidTeacher, group:r.group, etcType:r.etcType, students:r.students, total:eduMinutes(r), id:r.id, interpreter:r.interpreter, date:r.date, start:r.start, end:r.end,
     bands: info ? info.bands : null, place:r.place, program:r.program, division:r.division, request:r.request, targets:r.targets,
     method:r.method, area:r.area, content:r.content, result:r.result, client:r.client, deafNames:r.deafNames, hearingNames:r.hearingNames});
 }
 function detailHTML(item){
   const r = item.rec; const info = timeInfo(r); const miss = missing(r); const warn = warnings(r);
   if (item.theirs) return conflictHTML(item);
-  const rows = [
-    ["수어통역사", r.interpreter, true], ["수어통역일", r.date ? r.date+" ("+weekday(r.date)+")" : "", false],
-    ["수어통역시간", r.start && r.end ? r.start+" ~ "+r.end+(info ? " · 총 "+info.total+"분"+(info.overnight ? " (다음 날 종료)" : "") : "") : "", false],
+  const L = K(r);
+  const em = eduMinutes(r);
+  const rows = isEdu(r) ? [
+    [L.person, r.interpreter, true], ["보조강사명", r.aidTeacher, true], [L.lecture, r.program, true], ["단체명", r.group, true],
+    [L.date, r.date, false], ["시간", r.start && r.end ? r.start+" ~ "+r.end+(em !== null ? " · 총 "+em+"분 (기존 화면이 자동 계산)" : "") : "", false],
+    [L.place, r.place, true], ...(r.kind === "program" ? [["구분", r.etcType, false]] : []), [L.people, r.students, true],
+    [L.content, r.content, true], ["평가", r.result, true]
+  ] : [
+    [L.person, r.interpreter, true], [L.date, r.date ? r.date+" ("+weekday(r.date)+")" : "", false],
+    [L.name === "상담" ? "상담시간" : "수어통역시간", r.start && r.end ? r.start+" ~ "+r.end+(info ? " · 총 "+info.total+"분"+(info.overnight ? " (다음 날 종료)" : "") : "") : "", false],
     ["새벽·오전·오후·저녁", info ? info.bands.join(" · ")+" 분 (기존 시스템이 자동 계산)" : "", false],
-    ["수어통역장소", r.place, true], ["프로그램명", r.program, true], ["분류", r.division, false], ["의뢰방법", r.request, false],
-    ["통역대상", r.targets.join(", "), false], ["통역방법", r.method, false], ["통역영역", r.area, false],
-    ["수어통역내용", r.content, true], ["결과", r.result + (r.pendingResult ? (r.result ? "\n" : "")+"(결과 미확정)" : ""), true],
+    [L.place, r.place, true], ["프로그램명", r.program, true], ["분류", r.division, false], ...(isCounsel(r) ? [["상담구분", r.consultType, false]] : []), ["의뢰방법", r.request, false],
+    [L.targets, r.targets.join(", "), false], [L.method, r.method, false], [L.area, r.area, false],
+    [L.content, r.content, true], ["결과", r.result + (r.pendingResult ? (r.result ? "\n" : "")+"(결과 미확정)" : ""), true],
     ["의뢰인", r.client, true], ["참석 농인", r.deafNames, true], ["참석 청인", r.hearingNames, true]
   ];
-  return '<h2 id="detail-h" tabindex="-1">'+esc(r.client || r.place || "통역 기록")+' <span class="chip '+r.status+'">'+STATUS[r.status]+'</span></h2>'+
+  return '<h2 id="detail-h" tabindex="-1"><span class="kind-mini kind-'+kindOf(r)+'">'+L.name+'</span> '+esc((isEdu(r) ? r.program : r.client) || r.place || L.name+" 기록")+' <span class="chip '+r.status+'">'+STATUS[r.status]+'</span></h2>'+
     '<p class="muted">'+esc([r.owner && "작성 "+r.owner, item.dirty ? "저장 대기" : "", r.updated && "수정 "+new Date(r.updated).toLocaleString("ko-KR",{timeZone:"Asia/Seoul",dateStyle:"short",timeStyle:"short"})].filter(Boolean).join(" · "))+'</p>'+
     (item.error ? '<p class="note">이 기록을 저장하지 못했습니다('+esc(item.error)+'). 관리자에게 알려 주세요.</p>' : "")+
     (r.needsCorrection ? '<p class="note">입력 완료 후 내용이 바뀌었습니다. 기존 시스템의 등록 건을 찾아 수정한 뒤 아래에서 수정 완료를 표시하세요.</p>' : "")+
     (miss.length ? '<p class="note">남은 항목: '+esc(miss.map(m => m[1]).join(", "))+'</p>' : "")+
     (warn.length ? '<p class="note">'+esc(warn.join(" · "))+'</p>' : "")+
     '<div class="actions"><button type="button" id="edit">수정</button><button type="button" id="back" class="ghost">목록</button></div>'+
-    (r.status !== "done" || r.needsCorrection ? '<h3>기존 통역일지에 입력하기</h3>'+
+    (r.status !== "done" || r.needsCorrection ? '<h3>기존 시스템('+L.sys+')에 입력하기</h3>'+
       (wide() ? '<ol class="steps"><li><button type="button" class="primary" id="copy-open"'+(miss.length ? " disabled" : "")+'>입력값 복사하고 등록 화면 열기</button>'+(miss.length ? '<div class="muted">남은 항목을 먼저 채우세요.</div>' : "")+'</li>'+
-        '<li>열린 등록 화면에서 즐겨찾기 막대의 <b>통역일지 채우기</b>를 누르고 <b>Ctrl+V</b>를 누릅니다. <a href="#" id="howto-bm">즐겨찾기 설치 방법</a></li>'+
+        '<li>열린 등록 화면에서 즐겨찾기 막대의 <b>통역·상담일지 채우기</b>를 누르고 <b>Ctrl+V</b>를 누릅니다. <a href="#" id="howto-bm">즐겨찾기 설치 방법</a></li>'+
         '<li>노랗게 표시된 칸을 확인하고, 의뢰인과 참석자를 기존 화면에서 선택한 뒤 <b>등록</b>을 직접 누릅니다.</li>'+
         '<li><button type="button" id="mark-done"'+(miss.length && !r.needsCorrection ? " disabled" : "")+'>'+(r.needsCorrection ? "기존 시스템 수정 완료" : "등록 완료로 표시")+'</button></li></ol>' :
         '<p class="muted">사무실 PC에서 같은 주소를 열면 기존 통역일지 화면을 자동으로 채울 수 있습니다.</p>') : '<div class="actions"><button type="button" id="reopen" class="ghost">입력 대기로 되돌리기</button></div>')+
@@ -679,8 +780,8 @@ function bindDetail(item){
   $("#back").onclick = () => go("list");
   $("#copy-open")?.addEventListener("click", async () => {
     const ok = await copyText(fillPayload(item.rec));
-    window.open(FORM_URL, "kbdeaf-form");
-    toast(ok ? "복사했습니다. 등록 화면에서 ‘통역일지 채우기’ → Ctrl+V" : "복사하지 못했습니다. 다시 눌러 주세요.");
+    window.open(FORM_URLS[kindOf(item.rec)], "kbdeaf-form");
+    toast(ok ? "복사했습니다. 등록 화면에서 ‘통역·상담일지 채우기’ → Ctrl+V" : "복사하지 못했습니다. 다시 눌러 주세요.");
   });
   $("#howto-bm")?.addEventListener("click", e => { e.preventDefault(); go("settings"); setTimeout(() => $("#bm-help")?.scrollIntoView(), 50); });
   $("#mark-done")?.addEventListener("click", () => {
@@ -729,7 +830,7 @@ function bindConflict(item){
 function homeHTML(){
   return '<h2>사무실 PC에서 입력하기</h2>'+
     '<p class="muted">왼쪽 목록에서 <b>입력 대기</b> 기록을 고르면 기존 통역일지 등록 화면을 자동으로 채울 수 있습니다.</p>'+
-    '<p class="muted">즐겨찾기 ‘통역일지 채우기’가 아직 없다면 <a href="#" id="go-bm">설정</a>에서 설치하세요.</p>'+
+    '<p class="muted">즐겨찾기 ‘통역·상담일지 채우기’가 아직 없다면 <a href="#" id="go-bm">설정</a>에서 설치하세요.</p>'+
     (isAdmin() ? '<p class="muted">통역사 추가와 연결 링크 보내기는 위쪽 <b>관리</b>에서 합니다.</p>' : "");
 }
 function bindHome(){ $("#go-bm")?.addEventListener("click", e => { e.preventDefault(); go("settings"); setTimeout(() => $("#bm-help")?.scrollIntoView(), 50); }); }
@@ -788,7 +889,8 @@ const HELP = [
     '<li><b>갤럭시</b>: <b>앱 설치</b>를 누릅니다. 설치 단추가 없으면 크롬 ⋮ 메뉴 → <b>홈 화면에 추가</b>.</li>'+
     '<li><b>아이폰</b>: 사파리 <b>공유 단추 → 홈 화면에 추가</b>. 홈 화면 아이콘을 처음 열 때 링크와 함께 받은 <b>8자리 연결 코드</b>를 입력합니다.</li>'+
     '<li>그다음부터는 홈 화면의 <b>통역일지</b> 아이콘으로 엽니다.</li></ol>'],
-  ["field", "현장에서 기록하기", '<ol><li><b>＋ 새 통역 기록</b>을 누릅니다.</li>'+
+  ["field", "현장에서 기록하기", '<ol><li>처음 화면에서 종류를 골라 누릅니다: <b>＋ 통역</b>, <b>＋ 상담</b>, <b>＋ 수어교육</b>, <b>＋ 기타프로그램</b>. 종류마다 기존 시스템 화면에 맞는 항목이 나옵니다.</li>'+
+    '<li><b>수어교육·기타프로그램</b>: 강좌명(프로그램명)·장소·내용이 필수이고, 기타프로그램은 구분(장애인식개선교육·문화여가프로그램)도 고릅니다. 수강인원은 이름을 추가해 두면 PC에서 선택할 때 씁니다. 매주 같은 수업은 <b>이전 기록에서 불러오기</b>를 쓰세요.</li>'+
     '<li>시작·종료는 <b>지금</b> 단추로 넣고, 장소·의뢰인·분류·의뢰방법·통역내용부터 적습니다. 나머지는 나중에 채워도 됩니다.</li>'+
     '<li>적는 대로 <b>자동 저장</b>됩니다. 따로 저장 단추를 누르지 않아도 됩니다.</li>'+
     '<li>어느 화면에서든 왼쪽 위 <b>집 모양(통역일지)</b>을 누르면 처음 화면(기록 목록)으로 돌아갑니다.</li>'+
@@ -805,12 +907,12 @@ const HELP = [
     '<div><dt>비교 필요</dt><dd>두 기기에서 같은 칸을 다르게 고쳤습니다. 기록을 열어 남길 내용을 고르세요.</dd><span></span></div>'+
     '<div><dt>모두 저장됨</dt><dd>센터 구글 시트에 저장되었습니다.</dd><span></span></div>'+
     '<div><dt>보낼 기록 N건</dt><dd>인터넷이 없어 휴대폰에 보관 중입니다. 연결되면 자동으로 보냅니다.</dd><span></span></div></dl>'],
-  ["pc", "사무실 PC에서 기존 통역일지에 입력하기", '<p><b>처음 한 번</b></p><ol><li>PC의 엣지·크롬에서 이 앱 주소를 열고 연결합니다(본인 링크 또는 연결 코드).</li>'+
-    '<li><b>설정</b> → 노란 <b>통역일지 채우기</b> 단추를 즐겨찾기 막대로 끌어다 놓습니다. 즐겨찾기 막대는 <b>Ctrl+Shift+B</b>로 켭니다.</li>'+
+  ["pc", "사무실 PC에서 기존 통역·상담일지에 입력하기", '<p><b>처음 한 번</b></p><ol><li>PC의 엣지·크롬에서 이 앱 주소를 열고 연결합니다(본인 링크 또는 연결 코드).</li>'+
+    '<li><b>설정</b> → 노란 <b>통역·상담일지 채우기</b> 단추를 즐겨찾기 막대로 끌어다 놓습니다. 즐겨찾기 막대는 <b>Ctrl+Shift+B</b>로 켭니다.</li>'+
     '<li>같은 브라우저에서 협회 통역일지 사이트에 로그인해 둡니다.</li></ol>'+
     '<p><b>매번</b></p><ol><li>목록에서 <b>입력 대기</b> 기록을 누릅니다.</li>'+
-    '<li><b>입력값 복사하고 등록 화면 열기</b>를 누릅니다.</li>'+
-    '<li>열린 등록 화면에서 즐겨찾기 <b>통역일지 채우기</b>를 누르고 <b>Ctrl+V</b>.</li>'+
+    '<li><b>입력값 복사하고 등록 화면 열기</b>를 누릅니다. 기록 종류에 맞는 신규 작성 화면(통역관리·상담관리·수어교육관리·기타프로그램관리)이 열립니다.</li>'+
+    '<li>열린 등록 화면에서 즐겨찾기 <b>통역·상담일지 채우기</b>를 누르고 <b>Ctrl+V</b>.</li>'+
     '<li>노란 칸을 확인하고, 의뢰인·참석자를 기존 화면에서 선택한 뒤 <b>등록</b>을 직접 누릅니다.</li>'+
     '<li>앱으로 돌아와 <b>등록 완료로 표시</b>를 누릅니다.</li></ol>'+
     '<p class="muted">채우기 단추가 보이지 않으면 브라우저 창을 크게 띄우세요. 좁은 창에서는 휴대폰 화면으로 바뀝니다.</p>'],
@@ -840,16 +942,16 @@ function main_help(){
 function settingsHTML(){
   return '<section class="panel"><h2 tabindex="-1">설정</h2>'+
     '<p><b>'+esc(S.settings.name)+'</b>님'+(isAdmin() ? " (관리자)" : "")+'으로 연결되어 있습니다.</p>'+
-    '<form id="st"><label style="display:flex;gap:8px;align-items:center;min-height:44px"><input type="checkbox" name="defaultMethod" style="width:22px;height:22px"'+(S.settings.defaultMethod ? " checked" : "")+'>새 기록의 통역방법을 ‘수어,음성통역’으로 미리 선택</label>'+
-    '<label style="display:flex;gap:8px;align-items:center;min-height:44px"><input type="checkbox" name="defaultTargets" style="width:22px;height:22px"'+(S.settings.defaultTargets ? " checked" : "")+'>새 기록의 통역대상을 ‘농인·청인’으로 미리 선택</label>'+
+    '<form id="st"><label style="display:flex;gap:8px;align-items:center;min-height:44px"><input type="checkbox" name="defaultMethod" style="width:22px;height:22px"'+(S.settings.defaultMethod ? " checked" : "")+'>새 기록의 방법을 미리 선택 (통역: 수어,음성통역 · 상담: 수어)</label>'+
+    '<label style="display:flex;gap:8px;align-items:center;min-height:44px"><input type="checkbox" name="defaultTargets" style="width:22px;height:22px"'+(S.settings.defaultTargets ? " checked" : "")+'>새 기록의 대상을 ‘농인·청인’으로 미리 선택</label>'+
     '<div class="actions"><button class="primary" type="submit">저장</button><button type="button" class="ghost" id="st-back">돌아가기</button></div></form>'+
     '<div class="actions"><button type="button" id="st-help">사용방법 보기</button></div>'+
     '<p class="'+(offlineReady ? "okbox" : "note")+'">'+(offlineReady ? "인터넷 없는 곳에서도 열 수 있도록 준비되었습니다." : "오프라인 사용 준비 중입니다. 인터넷이 연결된 곳에서 한 번 더 열어 주세요.")+'</p>'+
     (!standalone() && !wide() ? '<div class="actions"><button type="button" id="st-install">홈 화면에 추가하는 방법</button></div>' : "")+
     '</section>'+
-    (wide() ? '<section class="panel" style="margin-top:14px" id="bm-help"><h2>사무실 PC: ‘통역일지 채우기’ 즐겨찾기 설치</h2>'+
-      '<ol class="steps"><li>키보드에서 <b>Ctrl+Shift+B</b>를 눌러 주소창 아래에 즐겨찾기 막대를 표시합니다.</li><li>아래 노란 단추를 마우스로 누른 채 즐겨찾기 막대까지 끌어다 놓습니다.</li><li>기존 통역일지 신규 작성 화면에서 이 즐겨찾기를 누르면 채우기 창이 열립니다.</li></ol>'+
-      '<a class="bm" id="bm" href="#" draggable="true">통역일지 채우기</a><p class="muted">입력칸만 채웁니다. 등록·저장 버튼은 누르지 않습니다.</p></section>' : "")+
+    (wide() ? '<section class="panel" style="margin-top:14px" id="bm-help"><h2>사무실 PC: ‘통역·상담일지 채우기’ 즐겨찾기 설치</h2><p class="note">예전에 ‘통역일지 채우기’를 설치했다면 지우고 이 단추로 다시 설치하세요. 새 즐겨찾기는 앱이 고쳐질 때 자동으로 최신 기능을 씁니다.</p>'+
+      '<ol class="steps"><li>키보드에서 <b>Ctrl+Shift+B</b>를 눌러 주소창 아래에 즐겨찾기 막대를 표시합니다.</li><li>아래 노란 단추를 마우스로 누른 채 즐겨찾기 막대까지 끌어다 놓습니다.</li><li>기존 통역·상담·수어교육·기타프로그램 신규 작성 화면에서 이 즐겨찾기를 누르면 채우기 창이 열립니다.</li></ol>'+
+      '<a class="bm" id="bm" href="#" draggable="true">통역·상담일지 채우기</a><p class="muted">입력칸만 채웁니다. 등록·저장 버튼은 누르지 않습니다.</p></section>' : "")+
     '<section class="panel" style="margin-top:14px"><h2>이 기기 연결 해제</h2><p class="muted">기기를 바꾸거나 다른 사람이 쓸 때 사용합니다. 저장되지 않은 기록이 있으면 먼저 인터넷에 연결하세요.</p>'+
     '<div class="actions"><button type="button" class="danger" id="logout">연결 해제</button></div></section>';
 }
@@ -859,7 +961,7 @@ function bindSettings(){
   $("#st-back").onclick = () => go("list");
   $("#st-help").onclick = () => { helpBack = "settings"; go("help"); };
   $("#st-install")?.addEventListener("click", () => go("install"));
-  const bm = $("#bm"); if (bm) { bm.href = "javascript:" + encodeURIComponent(FILLER.toString().replace(/^function FILLER\(\)\s*\{|\}$/g, "").replace(/\n\s*/g, "\n")); bm.onclick = e => { e.preventDefault(); toast("즐겨찾기 막대로 끌어다 놓으세요."); }; }
+  const bm = $("#bm"); if (bm) { const base = location.href.replace(/[#?].*$/, "").replace(/index\.html$/, ""); bm.href = "javascript:(function(){var s=document.createElement('script');s.charset='utf-8';s.src='" + base + "fill.js?v='+Date.now();document.body.appendChild(s);})();"; bm.onclick = e => { e.preventDefault(); toast("즐겨찾기 막대로 끌어다 놓으세요."); }; }
   $("#logout").onclick = () => {
     const p = pendingCount();
     if (!confirm(p ? "아직 저장되지 않은 기록 "+p+"건이 이 기기에서 지워집니다. 그래도 연결을 해제할까요?" : "이 기기의 연결을 해제할까요? 기록은 구글 시트에 남아 있습니다.")) return;
@@ -877,12 +979,14 @@ if ("serviceWorker" in navigator && isSecureContext && /^https?:$/.test(location
 function FILLER(){
 (function(){
 var F=document.transForm;
-if(!F||!/trans_form\.php/.test(location.pathname)){alert("기존 통역일지의 신규 작성 화면에서 눌러 주세요.");return;}
-if(F.trans_seq&&F.trans_seq.value){alert("이미 등록된 기록 화면입니다. ‘신규등록’ 화면에서 사용하세요.");return;}
+var path=location.pathname,pageKind=/edu2_form\.php/.test(path)?"program":/edu_form\.php/.test(path)?"edu":/trans_form\.php/.test(path)?((F&&F.doc_type&&F.doc_type.value==="C")?"counsel":"trans"):"";
+var KN={trans:"통역",counsel:"상담",edu:"수어교육",program:"기타프로그램"},KS={trans:"통역관리",counsel:"상담관리",edu:"수어교육관리",program:"기타프로그램관리"};
+if(!F||!pageKind){alert("기존 통역·상담·수어교육·기타프로그램의 신규 작성 화면에서 눌러 주세요.");return;}
+if((F.trans_seq&&F.trans_seq.value)||(F.edu_seq&&F.edu_seq.value)){alert("이미 등록된 기록 화면입니다. ‘신규등록’ 화면에서 사용하세요.");return;}
 var old=document.getElementById("ksl-fill");if(old)old.remove();
 var box=document.createElement("div");box.id="ksl-fill";
 box.style.cssText="position:fixed;right:14px;bottom:14px;z-index:2147483647;width:360px;max-height:60vh;overflow:auto;background:#fff;color:#172847;border:3px solid #184bad;border-radius:12px;padding:14px;font:14px/1.55 'Malgun Gothic',sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.3);text-align:left";
-box.innerHTML="<b style='font-size:16px'>통역일지 채우기</b><p style='margin:6px 0'>통역일지 앱에서 복사했다면 지금 <b>Ctrl+V</b>를 누르세요.</p><textarea aria-label='붙여넣기' style='width:100%;height:46px;font-size:12px'></textarea><div class='ksl-out'></div><p style='margin:8px 0 0;text-align:right'><button type='button' class='ksl-close'>닫기</button></p>";
+box.innerHTML="<b style='font-size:16px'>통역·상담일지 채우기</b><p style='margin:6px 0'>앱에서 복사했다면 지금 <b>Ctrl+V</b>를 누르세요.</p><textarea aria-label='붙여넣기' style='width:100%;height:46px;font-size:12px'></textarea><div class='ksl-out'></div><p style='margin:8px 0 0;text-align:right'><button type='button' class='ksl-close'>닫기</button></p>";
 document.body.appendChild(box);
 var ta=box.querySelector("textarea"),out=box.querySelector(".ksl-out");ta.focus();
 box.querySelector(".ksl-close").onclick=function(){box.remove();};
@@ -892,21 +996,38 @@ function h(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{
 function run(t){
 var d;try{d=JSON.parse(t);}catch(x){out.innerHTML="<p style='color:#a02424'>통역일지 앱의 ‘입력값 복사’로 복사한 내용이 아닙니다.</p>";return;}
 if(!d||d.k!=="ksl-fill"){out.innerHTML="<p style='color:#a02424'>통역일지 앱에서 복사한 내용이 아닙니다.</p>";return;}
+var dk=KN[d.kind]?d.kind:"trans",isEduK=dk==="edu"||dk==="program";
+if(dk!==pageKind){out.innerHTML="<p style='color:#a02424'><b>"+KN[dk]+" 기록입니다.</b> "+KS[dk]+"의 신규 작성 화면을 열고 다시 눌러 주세요.</p>";return;}
+var P=dk==="counsel"?"상담":"수어통역",N=dk==="counsel"?"상담":"통역",PS=dk==="counsel"?"상담사":"수어통역사";
 var done=[],warn=[],todo=[];
 function mark(el){el.style.background="#fff3b0";el.style.outline="2px solid #e0a73a";}
 function text(name,val,label,max){var el=F.elements[name];if(!el){warn.push(label+": 입력칸을 찾지 못함");return;}if(val==null||val===""){return;}
- if(el.value&&el.value!==val&&name==="translater_nm")warn.push("통역사: 화면의 ‘"+el.value+"’을 ‘"+val+"’로 바꿈");
+ if(el.value&&el.value!==val&&name==="translater_nm")warn.push(PS+": 화면의 ‘"+el.value+"’을 ‘"+val+"’로 바꿈");
  if(max&&val.length>max)warn.push(label+": "+max+"자 제한보다 깁니다 ("+val.length+"자). 줄여 주세요.");
  el.value=val;mark(el);done.push(label);}
 function pick(name,label,val,map){var els=F.querySelectorAll("[name='"+name+"']"),hit=null;for(var i=0;i<els.length;i++){var lt=lab(els[i]);if(lt===val)hit=els[i];}
  if(!val){return;}if(!hit){warn.push(label+": ‘"+val+"’ 선택지를 찾지 못함");return;}hit.checked=true;mark(hit.parentNode||hit);try{hit.dispatchEvent(new Event("change",{bubbles:true}));}catch(x){}done.push(label);}
 function lab(el){var n=el.nextSibling,s="";while(n&&!(n.nodeType===1&&n.tagName==="INPUT")){s+=n.textContent||"";n=n.nextSibling;if(s.trim().length>10)break;}return s.replace(/\s+/g," ").trim();}
-text("translater_nm",d.interpreter,"수어통역사",20);
+if(isEduK){
+text("teacher_nm",d.interpreter,"강사명",20);text("aid_teacher_nm",d.aidTeacher,"보조강사명",40);text("lecture_nm",d.program,dk==="edu"?"강좌명":"프로그램명",40);text("location_grp_nm",d.group,"단체명",40);
+var me=/^(\d{4})-(\d{2})-(\d{2})$/.exec(d.date||"");
+if(me&&F.edu_dt){var de=new Date(+me[1],+me[2]-1,+me[3]),ve=null;try{ve=window.jQuery&&jQuery.datepicker?jQuery.datepicker.formatDate(jQuery.datepicker._defaults.dateFormat||"yy-mm-dd",de):null;}catch(x){ve=null;}if(!ve)ve=d.date;F.edu_dt.value=ve;mark(F.edu_dt);done.push("날짜");}
+var se=(d.start||"").split(":"),ee=(d.end||"").split(":");
+if(se.length===2&&ee.length===2){F.start_time_1.value=se[0];F.start_time_2.value=se[1];F.end_time_1.value=ee[0];F.end_time_2.value=ee[1];[F.start_time_1,F.start_time_2,F.end_time_1,F.end_time_2].forEach(mark);done.push("시작·종료 시각");
+ if(typeof window.chk_time==="function"){window.chk_time();var gm=+((F.elements.edu_duration||{}).value)||0;if(d.total!=null&&gm!==d.total)warn.push("총 시간이 앱 계산("+d.total+"분)과 화면("+gm+"분)이 다릅니다.");else done.push("총 시간(자동 계산)");}
+ else todo.push("총 시간이 계산되지 않았습니다. 시각 칸을 한 번 눌렀다가 나오세요.");}
+text("edu_place",d.place,dk==="edu"?"교육장소":"장소",70);
+if(dk==="program")pick("etc_type","구분",d.etcType);
+text("edu_content",d.content,KN[dk]+"내용");
+text("evaluation",d.result,"평가");
+d.client="";d.deafNames="";d.hearingNames=d.students||"";
+}else{
+text("translater_nm",d.interpreter,PS,20);
 var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(d.date||"");
 if(m&&F.trans_dt){var dt=new Date(+m[1],+m[2]-1,+m[3]),v;
  try{v=window.jQuery&&jQuery.datepicker?jQuery.datepicker.formatDate("yy-mm-dd-DD ",dt,jQuery.datepicker._defaults):null;}catch(x){v=null;}
  if(!v)v=d.date+"-"+"일월화수목금토".charAt(dt.getDay())+" ";
- F.trans_dt.value=v;mark(F.trans_dt);done.push("수어통역일");}
+ F.trans_dt.value=v;mark(F.trans_dt);done.push(P+"일");}
 var st=(d.start||"").split(":"),en=(d.end||"").split(":");
 if(st.length===2&&en.length===2){F.start_time_1.value=st[0];F.start_time_2.value=st[1];F.end_time_1.value=en[0];F.end_time_2.value=en[1];
  [F.start_time_1,F.start_time_2,F.end_time_1,F.end_time_2].forEach(mark);done.push("시작·종료 시각");
@@ -915,25 +1036,27 @@ if(st.length===2&&en.length===2){F.start_time_1.value=st[0];F.start_time_2.value
   if(d.bands&&got.join()!==d.bands.join())warn.push("시간대별 분이 앱 계산("+d.bands.join("·")+")과 화면("+got.join("·")+")이 다릅니다.");
   else done.push("시간대별 분(자동 계산)");}
  else todo.push("시간대별 분이 계산되지 않았습니다. 시각 칸을 한 번 눌렀다가 나오세요.");}
-text("trans_place",d.place,"수어통역장소",40);
+text("trans_place",d.place,P+"장소",40);
 text("program_nm",d.program,"프로그램명");
 pick("trans_support_type","분류",d.division);
 pick("req_type","의뢰방법",d.request);
+if(d.kind==="counsel"&&d.consultType)pick("job_yn","상담구분",d.consultType);
 var boxes=F.querySelectorAll("[name='person_type[]']");if(boxes.length&&d.targets){var hits=0;for(var i=0;i<boxes.length;i++){var on=d.targets.indexOf(lab(boxes[i]))>=0;boxes[i].checked=on;if(on){mark(boxes[i].parentNode||boxes[i]);hits++;}}
- if(hits!==d.targets.length)warn.push("통역대상 일부를 찾지 못함");else done.push("통역대상");}
-pick("trans_type","통역방법",d.method);
-pick("content_type","통역영역",d.area);
-text("trans_content",d.content,"수어통역내용");
+ if(hits!==d.targets.length)warn.push(N+"대상 일부를 찾지 못함");else done.push(N+"대상");}
+pick("trans_type",N+"방법",d.method);
+pick("content_type",N+"영역",d.area);
+text("trans_content",d.content,P+"내용");
 text("trans_result",d.result,"결과",200);
+}
 var html="<p style='margin:8px 0;color:#11634d'><b>"+done.length+"개 항목을 채웠습니다.</b> 노란 칸을 확인하세요.</p>";
 if(warn.length)html+="<div style='background:#fff3d9;color:#674207;padding:8px;border-radius:8px;margin:6px 0'>"+warn.map(h).join("<br>")+"</div>";
 html+="<p style='margin:8px 0 4px'><b>직접 할 일</b></p><ol style='margin:0;padding-left:20px'>";
 if(F.req_name&&!F.req_name.value){html+="<li>의뢰인 선택: <button type='button' class='ksl-client'>‘"+h(d.client)+"’ 검색 창 열기</button></li>";}
 var dn=(d.deafNames||"").split(/[,，]/).map(function(s){return s.trim();}).filter(Boolean),hn=(d.hearingNames||"").split(/[,，]/).map(function(s){return s.trim();}).filter(Boolean);
 if(dn.length)html+="<li>참석인원(농인) 선택: "+dn.map(function(n,i){return "<button type='button' class='ksl-person' data-kind='deaf' data-name='"+h(n)+"'>"+h(n)+"</button>";}).join(" ")+"</li>";
-if(hn.length)html+="<li>참석인원(청인) 선택: "+hn.map(function(n){return "<button type='button' class='ksl-person' data-kind='hearing' data-name='"+h(n)+"'>"+h(n)+"</button>";}).join(" ")+"</li>";
+if(hn.length)html+="<li>"+(dk==="edu"?"수강인원":dk==="program"?"프로그램실인원":"참석인원(청인)")+" 선택: "+hn.map(function(n){return "<button type='button' class='ksl-person' data-kind='hearing' data-name='"+h(n)+"'>"+h(n)+"</button>";}).join(" ")+"</li>";
 todo.forEach(function(x){html+="<li>"+h(x)+"</li>";});
-html+="<li>내용을 확인한 뒤 화면 아래 <b>등록</b>을 직접 누르세요.</li><li>통역일지 앱으로 돌아가 <b>등록 완료로 표시</b>를 누르세요.</li></ol>";
+html+="<li>내용을 확인한 뒤 화면 아래 <b>등록</b>을 직접 누르세요.</li><li>앱으로 돌아가 <b>등록 완료로 표시</b>를 누르세요.</li></ol>";
 out.innerHTML=html;ta.value="";ta.style.display="none";box.querySelector("p").style.display="none";
 var cb=box.querySelector(".ksl-client");if(cb)cb.onclick=function(){openPop("pop_deaf_list.php?person_type=&search_type=name&search="+encodeURIComponent(d.client||""),"target_member_detail");};
 Array.prototype.forEach.call(box.querySelectorAll(".ksl-person"),function(b){b.onclick=function(){
