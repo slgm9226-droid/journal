@@ -1,4 +1,4 @@
-// 통역·상담·수어교육·기타프로그램 채우기 — 기존 협회 신규 작성 화면의 입력칸만 채웁니다. 등록 버튼은 누르지 않습니다.
+// 수어센터 업무일지 채우기 — 기존 협회 신규 작성 화면의 입력칸만 채웁니다. 등록 버튼은 누르지 않습니다.
 (function(){
 var F=document.transForm;
 var APP=(document.currentScript&&document.currentScript.src)?new URL(document.currentScript.src).origin:"*";
@@ -9,7 +9,7 @@ if((F.trans_seq&&F.trans_seq.value)||(F.edu_seq&&F.edu_seq.value)){alert("이미
 var old=document.getElementById("ksl-fill");if(old)old.remove();
 var box=document.createElement("div");box.id="ksl-fill";
 box.style.cssText="position:fixed;right:14px;bottom:14px;z-index:2147483647;width:360px;max-height:60vh;overflow:auto;background:#fff;color:#172847;border:3px solid #184bad;border-radius:12px;padding:14px;font:14px/1.55 'Malgun Gothic',sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.3);text-align:left";
-box.innerHTML="<b style='font-size:16px'>통역·상담일지 채우기</b><p style='margin:6px 0'>앱에서 복사했다면 지금 <b>Ctrl+V</b>를 누르세요.</p><textarea aria-label='붙여넣기' style='width:100%;height:46px;font-size:12px'></textarea><div class='ksl-out'></div><p style='margin:8px 0 0;text-align:right'><button type='button' class='ksl-close'>닫기</button></p>";
+box.innerHTML="<b style='font-size:16px'>업무일지 채우기</b><p style='margin:6px 0'>앱에서 복사했다면 지금 <b>Ctrl+V</b>를 누르세요.</p><textarea aria-label='붙여넣기' style='width:100%;height:46px;font-size:12px'></textarea><div class='ksl-out'></div><p style='margin:8px 0 0;text-align:right'><button type='button' class='ksl-close'>닫기</button></p>";
 document.body.appendChild(box);
 var ta=box.querySelector("textarea"),out=box.querySelector(".ksl-out");ta.focus();
 box.querySelector(".ksl-close").onclick=function(){box.remove();};
@@ -17,8 +17,8 @@ ta.addEventListener("paste",function(e){var t=(e.clipboardData||window.clipboard
 ta.addEventListener("input",function(){if(ta.value.trim().charAt(0)==="{")run(ta.value);});
 function h(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 function run(t){
-var d;try{d=JSON.parse(t);}catch(x){out.innerHTML="<p style='color:#a02424'>통역일지 앱의 ‘입력값 복사’로 복사한 내용이 아닙니다.</p>";return;}
-if(!d||d.k!=="ksl-fill"){out.innerHTML="<p style='color:#a02424'>통역일지 앱에서 복사한 내용이 아닙니다.</p>";return;}
+var d;try{d=JSON.parse(t);}catch(x){out.innerHTML="<p style='color:#a02424'>업무일지 앱의 ‘입력값 복사’로 복사한 내용이 아닙니다.</p>";return;}
+if(!d||d.k!=="ksl-fill"){out.innerHTML="<p style='color:#a02424'>업무일지 앱에서 복사한 내용이 아닙니다.</p>";return;}
 var dk=KN[d.kind]?d.kind:"trans",isEduK=dk==="edu"||dk==="program";
 if(dk!==pageKind){out.innerHTML="<p style='color:#a02424'><b>"+KN[dk]+" 기록입니다.</b> "+KS[dk]+"의 신규 작성 화면을 열고 다시 눌러 주세요.</p>";return;}
 var P=dk==="counsel"?"상담":"수어통역",N=dk==="counsel"?"상담":"통역",PS=dk==="counsel"?"상담사":"수어통역사";

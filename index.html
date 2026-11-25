@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#152e5d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="통역일지"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#ffffff"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="업무일지"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="referrer" content="no-referrer">
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
-<title>통역일지</title>
+<title>수어센터 업무일지</title>
 <style>
 :root{color-scheme:light;--ink:#172847;--muted:#55657e;--line:#dbe2ed;--bg:#f3f5f9;--paper:#fff;--blue:#184bad;--pale:#e9effd;--green:#11634d;--amber:#fff3d9;--amber-ink:#674207;--red:#a02424}
 *{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
@@ -97,11 +97,64 @@ details.help{border-top:1px solid var(--line)}details.help:last-of-type{border-b
 details.help summary{font-weight:700;min-height:50px;display:flex;align-items:center;cursor:pointer;font-size:16px}
 details.help>div{padding:0 0 12px;font-size:15px}details.help ol,details.help ul{padding-left:22px;margin:6px 0}details.help li{margin:5px 0}
 @media(max-width:420px){.bar{gap:6px;padding:8px 10px}.bar h1{font-size:17px}.bar button{padding:5px 8px;font-size:13px}.sync{font-size:12px;white-space:normal;text-align:right;max-width:96px}}
+
+/* ---------- design refresh: calm, flat, colour only for record types ---------- */
+:root{--ink:#1d2430;--muted:#5d6775;--line:#e2e6eb;--bg:#f2f4f6;--paper:#fff;--blue:#1f5b6b;--pale:#e4eff1;--green:#127055;--brand:#1f5b6b;
+ --k-trans:#2d5bd0;--k-counsel:#14805c;--k-edu:#7650c2;--k-program:#c0661c}
+body{background:var(--bg);font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;letter-spacing:-.01em}
+header{background:#fff;color:var(--ink);border-bottom:1px solid var(--line);box-shadow:none}
+.bar{min-height:58px}
+.bar h1 button{color:var(--ink);gap:9px;font-size:18px;font-weight:800}
+.bar h1 button .brand-icon{border-radius:8px;display:block}
+.bar h1 button .home-mark{color:var(--muted);opacity:.7}
+.bar button{background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:700}
+.bar button:hover{border-color:#c9d1db;background:#f7f9fa}
+.sync{color:var(--green);font-weight:700}
+.sync.warn{color:#9a5b00}
+.panel{border:1px solid var(--line);border-radius:16px;box-shadow:0 1px 0 rgba(29,36,48,.03)}
+button.primary{background:var(--brand);border-color:var(--brand)}
+button{border-color:var(--line)}
+.tabs button[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+.chips button[aria-pressed=true]{background:var(--brand);border-color:var(--brand)}
+.new-row{gap:10px;margin-top:4px}
+.new-row button.primary.big{position:relative;background:#fff;color:var(--ink);border:1px solid var(--line);border-left:6px solid var(--kc,var(--brand));text-align:left;padding:10px 12px 10px 14px;min-height:58px;font-size:16px;font-weight:800;box-shadow:none}
+.new-row button.primary.big:hover{background:#f8fafb}
+.new-row button.primary.big::before{content:"+";display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--kc,var(--brand));color:#fff;font-size:16px;line-height:1;margin-right:8px;vertical-align:-3px}
+.new-row #new{--kc:var(--k-trans)}.new-row #new-counsel{--kc:var(--k-counsel)}.new-row #new-edu{--kc:var(--k-edu)}.new-row #new-program{--kc:var(--k-program)}
+ul.list li+li{margin-top:0}
+ul.list .item{border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;padding:12px 4px}
+ul.list li:last-child .item{border-bottom:0}
+ul.list .item:hover{background:#f8fafb}
+ul.list .item[aria-current=true]{background:var(--pale);border-radius:10px}
+.kind-mini{background:transparent;padding:0 0 0 12px;position:relative;color:var(--k-trans)}
+.kind-mini::before{content:"";position:absolute;left:0;top:50%;width:8px;height:8px;margin-top:-4px;border-radius:50%;background:currentColor}
+.kind-mini.kind-trans{color:var(--k-trans);background:transparent}.kind-mini.kind-counsel{color:var(--k-counsel);background:transparent}.kind-mini.kind-edu{color:var(--k-edu);background:transparent}.kind-mini.kind-program{color:var(--k-program);background:transparent}
+.kind-tag{display:inline-block;font-size:13px;color:#fff;background:var(--k-trans);border-radius:999px;padding:2px 10px;margin-bottom:10px}
+.kind-tag.kind-counsel{background:var(--k-counsel);color:#fff}.kind-tag.kind-edu{background:var(--k-edu);color:#fff}.kind-tag.kind-program{background:var(--k-program);color:#fff}
+.chip{font-weight:700;background:#eef1f4}
+.chip.ready{background:#e4eff1;color:var(--brand)}.chip.done{background:#e2f3ea;color:var(--green)}
+.missing{border-radius:12px}
+.complete{border-radius:12px}
+.bottom{background:linear-gradient(rgba(242,244,246,0),var(--bg) 35%)}
+.toast{background:var(--ink)}
+.f input,.f textarea,.f select,.time input{border-color:#d3d9e0}
+.f input:focus,.f textarea:focus,.time input:focus{border-color:var(--brand);outline:none;box-shadow:0 0 0 3px rgba(31,91,107,.18)}
+.empty{border:0;background:#f7f9fa}
+@media(max-width:420px){.bar h1 button{font-size:17px}.bar h1 button .home-mark{display:none}.new-row button.primary.big{font-size:15px;padding-left:10px}}
+.new-row-label{margin:2px 0 8px;color:var(--muted);font-size:14px;font-weight:700}
+.tabs{gap:6px;margin:12px 0 0}.tabs+.tabs{margin-top:8px}
+.tabs button{min-height:36px;padding:4px 12px;font-size:13px;border-radius:999px}
+.tabs[aria-label="기록 종류"]{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.tabs[aria-label="기록 종류"]::-webkit-scrollbar{display:none}
+.tabs[aria-label="기록 종류"] button{flex:0 0 auto}
+ul.list{margin-top:8px}
+.item small{white-space:pre-line}
+.item>span:first-child{font-weight:700}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style>
 <script src="config.js"></script>
 </head>
 <body>
-<header><div class="bar"><h1 id="title"><button type="button" id="home-btn" aria-label="처음 화면으로 (기록 목록)"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h4.5v-5.5h4v5.5h4.5V10"/></svg><span>통역일지</span></button></h1><span class="sync" id="sync" role="status" aria-live="polite"></span><button type="button" id="help-btn">도움말</button><button type="button" id="admin-btn" hidden>관리</button><button type="button" id="settings-btn" hidden>설정</button></div></header>
+<header><div class="bar"><h1 id="title"><button type="button" id="home-btn" aria-label="처음 화면으로 (기록 목록)"><img src="icon-192.png" alt="" width="30" height="30" class="brand-icon"><span>업무일지</span><svg class="home-mark" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h4.5v-5.5h4v5.5h4.5V10"/></svg></button></h1><span class="sync" id="sync" role="status" aria-live="polite"></span><button type="button" id="help-btn">도움말</button><button type="button" id="admin-btn" hidden>관리</button><button type="button" id="settings-btn" hidden>설정</button></div></header>
 <main id="main"></main>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script>
@@ -453,7 +506,7 @@ function render(focus){
 
 /* ---------- join & install screens ---------- */
 function joinHTML(){
-  return '<section class="panel" style="max-width:520px;margin:auto"><h2 tabindex="-1">통역일지 연결</h2>'+
+  return '<section class="panel" style="max-width:520px;margin:auto"><img src="icon-192.png" alt="" width="64" height="64" style="border-radius:16px;display:block;margin:4px 0 12px"><h2 tabindex="-1">수어센터 업무일지 연결</h2>'+
     (view.message ? '<p class="note">'+esc(view.message)+'</p>' : "")+
     '<p>관리자에게 받은 <b>링크를 누르면</b> 자동으로 연결됩니다.</p>'+
     '<p class="muted">아이폰에서 홈 화면 아이콘으로 처음 열었을 때는 받은 <b>8자리 연결 코드</b>를 한 번 입력하세요.</p>'+
@@ -482,12 +535,12 @@ function installHTML(){
     '<p><b>'+esc(S.settings.name)+'</b>님으로 연결되었습니다. 홈 화면에 아이콘을 만들면 앱처럼 열리고, 인터넷이 없는 곳에서도 쓸 수 있습니다.</p>'+
     (installPrompt ? '<button type="button" class="primary big" id="install">앱 설치 (한 번 누르기)</button>' :
      ios ? '<ol class="steps"><li>화면 아래(또는 위) <b>공유 단추</b> <span aria-hidden="true">⬆︎</span> 를 누릅니다.</li><li><b>홈 화면에 추가</b>를 누르고 <b>추가</b>를 누릅니다.</li>'+
-       '<li>홈 화면의 <b>통역일지</b> 아이콘을 처음 열면 연결 코드 <b class="code" style="font-size:20px">'+esc(lastCode || "(받은 코드)")+'</b>를 한 번 입력합니다.</li></ol>' :
-       '<ol class="steps"><li>오른쪽 위 <b>⋮</b> (삼성 인터넷은 아래 <b>≡</b>) 를 누릅니다.</li><li><b>홈 화면에 추가</b> 또는 <b>앱 설치</b>를 누릅니다.</li><li>홈 화면의 <b>통역일지</b> 아이콘으로 여세요.</li></ol>')+
+       '<li>홈 화면의 <b>업무일지</b> 아이콘을 처음 열면 연결 코드 <b class="code" style="font-size:20px">'+esc(lastCode || "(받은 코드)")+'</b>를 한 번 입력합니다.</li></ol>' :
+       '<ol class="steps"><li>오른쪽 위 <b>⋮</b> (삼성 인터넷은 아래 <b>≡</b>) 를 누릅니다.</li><li><b>홈 화면에 추가</b> 또는 <b>앱 설치</b>를 누릅니다.</li><li>홈 화면의 <b>업무일지</b> 아이콘으로 여세요.</li></ol>')+
     '<button type="button" class="ghost big" id="skip" style="margin-top:8px">지금은 이 화면에서 쓰기</button></section>';
 }
 function bindInstall(){
-  $("#install")?.addEventListener("click", async () => { installPrompt.prompt(); const r = await installPrompt.userChoice.catch(() => null); installPrompt = null; if (r && r.outcome === "accepted") toast("설치했습니다. 홈 화면의 통역일지 아이콘으로 여세요."); go("list"); });
+  $("#install")?.addEventListener("click", async () => { installPrompt.prompt(); const r = await installPrompt.userChoice.catch(() => null); installPrompt = null; if (r && r.outcome === "accepted") toast("설치했습니다. 홈 화면의 업무일지 아이콘으로 여세요."); go("list"); });
   $("#skip").onclick = () => go("list");
 }
 
@@ -501,7 +554,7 @@ function listHTML(){
   const shown = groups[view.filter].sort((a,b) => (b.rec.date+b.rec.start).localeCompare(a.rec.date+a.rec.start) || b.rec.updated.localeCompare(a.rec.updated));
   const ready = groups.active.filter(it => it.rec.status === "ready").length;
   return '<h2 id="list-h" tabindex="-1">'+esc(S.settings.name)+'님 기록</h2>'+
-    '<div class="new-row"><button type="button" class="primary big" id="new">＋ 통역</button><button type="button" class="primary big counsel" id="new-counsel">＋ 상담</button><button type="button" class="primary big edu" id="new-edu">＋ 수어교육</button><button type="button" class="primary big program" id="new-program">＋ 기타프로그램</button></div>'+
+    '<p class="new-row-label">새 기록</p><div class="new-row"><button type="button" class="primary big" id="new" aria-label="새 통역 기록">통역</button><button type="button" class="primary big counsel" id="new-counsel" aria-label="새 상담 기록">상담</button><button type="button" class="primary big edu" id="new-edu" aria-label="새 수어교육 기록">수어교육</button><button type="button" class="primary big program" id="new-program" aria-label="새 기타프로그램 기록">기타프로그램</button></div>'+
     (storageOk ? "" : '<p class="note">이 브라우저에 저장할 수 없습니다. 사생활 보호 모드인지 확인하세요.</p>')+
     (isAdmin() ? '<div class="tabs" role="group" aria-label="통역사"><button type="button" data-owner="mine" aria-pressed="'+(view.owner==="mine")+'">내 기록</button><button type="button" data-owner="all" aria-pressed="'+(view.owner==="all")+'">모든 통역사</button></div>' : "")+
     (kindsHere.length > 1 ? '<div class="tabs" role="group" aria-label="기록 종류"><button type="button" data-kind="all" aria-pressed="'+(view.kind==="all")+'">전체</button>'+kindsHere.map(k => '<button type="button" data-kind="'+k+'" aria-pressed="'+(view.kind===k)+'">'+KINDS[k].name+'</button>').join("")+'</div>' : "")+
@@ -509,10 +562,10 @@ function listHTML(){
     (shown.length ? '<ul class="list">'+shown.map(it => {
       const r = it.rec; const miss = missing(r);
       const chip = it.theirs ? '<span class="chip warn">비교 필요</span>' : r.needsCorrection ? '<span class="chip warn">수정 반영 필요</span>' :
-        '<span class="chip '+r.status+'">'+STATUS[r.status]+(r.status==="draft" && miss.length ? " · "+(miss.length <= 2 ? miss.map(m => m[1]).join(", ")+" 남음" : miss.length+"개 남음") : "")+'</span>';
-      const sub = [r.date ? r.date.slice(5).replace("-","/")+"("+weekday(r.date)+")" : "", r.start && r.end ? r.start+"~"+r.end : "", isEdu(r) ? r.etcType : r.division, isEdu(r) ? (splitNames(r.students).length ? splitNames(r.students).length+"명" : "") : r.area, r.owner !== S.settings.name ? r.owner : "", it.dirty ? "저장 대기" : ""].filter(Boolean).join(" · ");
+        '<span class="chip '+r.status+'">'+STATUS[r.status]+(r.status==="draft" && miss.length ? " "+miss.length : "")+'</span>';
+      const sub = [r.date ? r.date.slice(5).replace("-","/")+"("+weekday(r.date)+")" : "", r.start && r.end ? r.start+"~"+r.end : "", isEdu(r) ? r.etcType : r.division, isEdu(r) ? (splitNames(r.students).length ? splitNames(r.students).length+"명" : "") : r.area, r.owner !== S.settings.name ? r.owner : "", it.dirty ? "저장 대기" : ""].filter(Boolean).join(" · ") + (r.status === "draft" && miss.length && !it.theirs ? "\n남은 항목: " + miss.map(m => m[1]).join(", ") : "");
       return '<li><button type="button" class="item" data-open="'+esc(r.id)+'" aria-current="'+(view.id===r.id)+'"><span><span class="kind-mini kind-'+kindOf(r)+'">'+K(r).name+'</span> '+(isEdu(r) ? esc(r.program || r.group || r.place || "제목 없는 기록")+(r.group && r.program ? " · "+esc(r.group) : "") : esc(r.client || r.place || r.content.slice(0,24) || "제목 없는 기록")+(r.place && r.client ? " · "+esc(r.place) : ""))+'</span>'+chip+'<small>'+esc(sub)+'</small></button></li>';
-    }).join("")+'</ul>' : (view.filter==="active" && !visibleItems().length ? '<div class="empty"><p style="margin:0 0 10px">아직 기록이 없습니다. 통역·상담·수어교육·기타프로그램이 끝나면 위의 <b>＋</b> 단추에서 종류를 골라 기록하세요.</p><button type="button" id="first-help">사용방법 보기</button></div>' :
+    }).join("")+'</ul>' : (view.filter==="active" && !visibleItems().length ? '<div class="empty"><p style="margin:0 0 10px">아직 기록이 없습니다. 통역·상담·수어교육·기타프로그램이 끝나면 위의 <b>새 기록</b> 단추에서 종류를 골라 기록하세요.</p><button type="button" id="first-help">사용방법 보기</button></div>' :
       '<p class="empty">'+(view.filter==="active" ? "진행 중인 기록이 없습니다." : "입력 완료한 기록이 없습니다.")+'</p>'));
 }
 function bindList(){
@@ -616,7 +669,7 @@ function editHTML(item){
   '<label class="f">결과<textarea name="result" maxlength="1000" placeholder="예) 다음 진료를 예약함">'+esc(r.result)+'</textarea></label><div class="counter" id="result-count"></div>'+
   '<label style="display:flex;gap:8px;align-items:center;min-height:44px;font-size:15px"><input type="checkbox" name="pendingResult" style="width:22px;height:22px"'+(r.pendingResult ? " checked" : "")+'>결과 미확정 · 나중에 확인</label>'+
   '<h3>참석자 <span class="muted" style="font-weight:500">(선택)</span></h3>'+
-  '<p class="muted" style="margin:0">기존 통역일지의 참석인원(농인)·(청인)에서 고를 이름입니다. 없으면 비워 두세요.</p>'+
+  '<p class="muted" style="margin:0">기존 시스템의 참석인원(농인)·(청인)에서 고를 이름입니다. 없으면 비워 두세요.</p>'+
   '<div id="people-deafNames"></div><div id="people-hearingNames"></div>'+
   '<details'+(r.program ? " open" : "")+'><summary style="font-weight:700;min-height:44px;padding-top:10px;cursor:pointer">프로그램명 (선택)</summary>'+
   '<label class="f">프로그램명<input name="program" maxlength="100" value="'+esc(r.program)+'"></label></details>'+
@@ -706,7 +759,7 @@ function bindEdit(item){
       const r = item.rec;
       if (!hasContent(item) && !r.start && !r.end) { S.items = S.items.filter(it => it !== item); persist(); go("list"); return; }
       const label = r.client || r.place || "이 기록";
-      if (!confirm(label+" 기록을 삭제할까요?"+(r.status === "done" ? "\n\n앱에서만 삭제됩니다. 기존 통역일지에 등록한 건은 그대로 남습니다." : "\n\n삭제하면 되돌릴 수 없습니다."))) return;
+      if (!confirm(label+" 기록을 삭제할까요?"+(r.status === "done" ? "\n\n앱에서만 삭제됩니다. 기존 시스템에 등록한 건은 그대로 남습니다." : "\n\n삭제하면 되돌릴 수 없습니다."))) return;
       commit(item, {status:"deleted"});
       if (!item.base) S.items = S.items.filter(it => it !== item);
       persist(); syncNow(); go("list"); toast("삭제했습니다.");
@@ -760,10 +813,10 @@ function detailHTML(item){
     '<div class="actions"><button type="button" id="edit">수정</button><button type="button" id="back" class="ghost">목록</button></div>'+
     (r.status !== "done" || r.needsCorrection ? '<h3>기존 시스템('+L.sys+')에 입력하기</h3>'+
       (wide() ? '<ol class="steps"><li><button type="button" class="primary" id="copy-open"'+(miss.length ? " disabled" : "")+'>입력값 복사하고 등록 화면 열기</button>'+(miss.length ? '<div class="muted">남은 항목을 먼저 채우세요.</div>' : "")+'</li>'+
-        '<li>열린 등록 화면에서 즐겨찾기 막대의 <b>통역·상담일지 채우기</b>를 누르고 <b>Ctrl+V</b>를 누릅니다. <a href="#" id="howto-bm">즐겨찾기 설치 방법</a></li>'+
+        '<li>열린 등록 화면에서 즐겨찾기 막대의 <b>업무일지 채우기</b>를 누르고 <b>Ctrl+V</b>를 누릅니다. <a href="#" id="howto-bm">즐겨찾기 설치 방법</a></li>'+
         '<li>노랗게 표시된 칸을 확인하고, 의뢰인과 참석자를 기존 화면에서 선택한 뒤 <b>등록</b>을 직접 누릅니다.</li>'+
         '<li><button type="button" id="mark-done"'+(miss.length && !r.needsCorrection ? " disabled" : "")+'>'+(r.needsCorrection ? "기존 시스템 수정 완료" : "등록 완료로 표시")+'</button></li></ol>' :
-        '<p class="muted">사무실 PC에서 같은 주소를 열면 기존 통역일지 화면을 자동으로 채울 수 있습니다.</p>') : '<div class="actions"><button type="button" id="reopen" class="ghost">입력 대기로 되돌리기</button></div>')+
+        '<p class="muted">사무실 PC에서 같은 주소를 열면 기존 시스템 화면을 자동으로 채울 수 있습니다.</p>') : '<div class="actions"><button type="button" id="reopen" class="ghost">입력 대기로 되돌리기</button></div>')+
     '<h3>항목별 내용</h3><dl class="copy">'+rows.map(([label,value,copy],i) => '<div><dt>'+esc(label)+'</dt><dd>'+esc(value || "—")+'</dd>'+(copy && value ? '<button type="button" data-copyrow="'+i+'">복사</button>' : "<span></span>")+'</div>').join("")+'</dl>'+
     '<div class="actions"><button type="button" class="danger ghost" id="delete">이 기록 삭제</button></div>';
 }
@@ -784,12 +837,12 @@ function bindDetail(item){
   $("#copy-open")?.addEventListener("click", async () => {
     const ok = await copyText(fillPayload(item.rec));
     window.open(FORM_URLS[kindOf(item.rec)], "kbdeaf-form");
-    toast(ok ? "복사했습니다. 등록 화면에서 ‘통역·상담일지 채우기’ → Ctrl+V" : "복사하지 못했습니다. 다시 눌러 주세요.");
+    toast(ok ? "복사했습니다. 등록 화면에서 ‘업무일지 채우기’ → Ctrl+V" : "복사하지 못했습니다. 다시 눌러 주세요.");
   });
   $("#howto-bm")?.addEventListener("click", e => { e.preventDefault(); go("settings"); setTimeout(() => $("#bm-help")?.scrollIntoView(), 50); });
   $("#mark-done")?.addEventListener("click", () => {
     const fix = item.rec.needsCorrection;
-    if (!confirm(fix ? "기존 통역일지의 등록 건을 수정했습니까?" : "기존 통역일지에서 ‘등록’까지 마쳤습니까?")) return;
+    if (!confirm(fix ? "기존 시스템의 등록 건을 수정했습니까?" : "기존 시스템에서 ‘등록’까지 마쳤습니까?")) return;
     commit(item, {status:"done", needsCorrection:false}); syncNow(); render(false); toast(fix ? "수정 완료로 표시했습니다." : "입력 완료로 표시했습니다.");
   });
   $("#reopen")?.addEventListener("click", () => {
@@ -797,7 +850,7 @@ function bindDetail(item){
     commit(item, {status: missing(item.rec).length ? "draft" : "ready", needsCorrection:false}); syncNow(); render(false);
   });
   $("#delete").onclick = () => {
-    if (!confirm(item.rec.status === "done" ? "앱에서만 삭제합니다. 기존 통역일지의 등록 건은 그대로입니다. 삭제할까요?" : "이 기록을 삭제할까요?")) return;
+    if (!confirm(item.rec.status === "done" ? "앱에서만 삭제합니다. 기존 시스템의 등록 건은 그대로입니다. 삭제할까요?" : "이 기록을 삭제할까요?")) return;
     commit(item, {status:"deleted"});
     if (!item.base) S.items = S.items.filter(it => it !== item);
     persist(); syncNow(); go("list"); toast("삭제했습니다.");
@@ -832,8 +885,8 @@ function bindConflict(item){
 /* ---------- home panel on wide screens ---------- */
 function homeHTML(){
   return '<h2>사무실 PC에서 입력하기</h2>'+
-    '<p class="muted">왼쪽 목록에서 <b>입력 대기</b> 기록을 고르면 기존 통역일지 등록 화면을 자동으로 채울 수 있습니다.</p>'+
-    '<p class="muted">즐겨찾기 ‘통역·상담일지 채우기’가 아직 없다면 <a href="#" id="go-bm">설정</a>에서 설치하세요.</p>'+
+    '<p class="muted">왼쪽 목록에서 <b>입력 대기</b> 기록을 고르면 기존 시스템 등록 화면을 자동으로 채울 수 있습니다.</p>'+
+    '<p class="muted">즐겨찾기 ‘업무일지 채우기’가 아직 없다면 <a href="#" id="go-bm">설정</a>에서 설치하세요.</p>'+
     (isAdmin() ? '<p class="muted">통역사 추가와 연결 링크 보내기는 위쪽 <b>관리</b>에서 합니다.</p>' : "");
 }
 function bindHome(){ $("#go-bm")?.addEventListener("click", e => { e.preventDefault(); go("settings"); setTimeout(() => $("#bm-help")?.scrollIntoView(), 50); }); }
@@ -872,8 +925,8 @@ function bindAdmin(){
   document.querySelectorAll("[data-share]").forEach(b => b.onclick = async () => {
     const u = adminUsers.find(x => x.name === b.dataset.share); if (!u) return;
     const link = inviteLink(u.code);
-    const text = "[통역일지] "+u.name+"님 연결 링크입니다. 휴대폰에서 눌러 주세요.\n"+link+"\n(아이폰 홈 화면 앱에서는 연결 코드 "+u.code+" 입력)";
-    if (navigator.share && !wide()) { try { await navigator.share({title:"통역일지 연결", text}); return; } catch {} }
+    const text = "[수어센터 업무일지] "+u.name+"님 연결 링크입니다. 휴대폰에서 눌러 주세요.\n"+link+"\n(아이폰 홈 화면 앱에서는 연결 코드 "+u.code+" 입력)";
+    if (navigator.share && !wide()) { try { await navigator.share({title:"업무일지 연결", text}); return; } catch {} }
     toast(await copyText(text) ? "링크를 복사했습니다. 카카오톡이나 문자에 붙여 넣으세요." : link);
   });
   document.querySelectorAll("[data-qr]").forEach(b => b.onclick = () => { qrFor = qrFor === b.dataset.qr ? "" : b.dataset.qr; render(false); const c = $("#uqr"); const u = adminUsers.find(x => x.name === qrFor); if (c && u) drawQR(c, inviteLink(u.code)); });
@@ -891,38 +944,38 @@ const HELP = [
   ["start", "처음 시작하기", '<ol><li>관리자에게 받은 <b>연결 링크</b>를 누릅니다. 카카오톡에서 누르면 크롬·사파리로 다시 열립니다.</li>'+
     '<li><b>갤럭시</b>: <b>앱 설치</b>를 누릅니다. 설치 단추가 없으면 크롬 ⋮ 메뉴 → <b>홈 화면에 추가</b>.</li>'+
     '<li><b>아이폰</b>: 사파리 <b>공유 단추 → 홈 화면에 추가</b>. 홈 화면 아이콘을 처음 열 때 링크와 함께 받은 <b>8자리 연결 코드</b>를 입력합니다.</li>'+
-    '<li>그다음부터는 홈 화면의 <b>통역일지</b> 아이콘으로 엽니다.</li></ol>'],
-  ["field", "현장에서 기록하기", '<ol><li>처음 화면에서 종류를 골라 누릅니다: <b>＋ 통역</b>, <b>＋ 상담</b>, <b>＋ 수어교육</b>, <b>＋ 기타프로그램</b>. 종류마다 기존 시스템 화면에 맞는 항목이 나옵니다.</li>'+
+    '<li>그다음부터는 홈 화면의 <b>업무일지</b> 아이콘으로 엽니다.</li></ol>'],
+  ["field", "현장에서 기록하기", '<ol><li>처음 화면에서 종류를 골라 누릅니다: <b>통역</b>, <b>상담</b>, <b>수어교육</b>, <b>기타프로그램</b> (‘새 기록’ 아래 단추). 종류마다 기존 시스템 화면에 맞는 항목이 나옵니다.</li>'+
     '<li><b>수어교육·기타프로그램</b>: 강좌명(프로그램명)·장소·내용이 필수이고, 기타프로그램은 구분(장애인식개선교육·문화여가프로그램)도 고릅니다. 수강인원은 이름을 추가해 두면 PC에서 선택할 때 씁니다. 매주 같은 수업은 <b>이전 기록에서 불러오기</b>를 쓰세요.</li>'+
     '<li>시작·종료는 <b>지금</b> 단추로 넣고, 장소·의뢰인·분류·의뢰방법·통역내용부터 적습니다. 나머지는 나중에 채워도 됩니다.</li>'+
     '<li>적는 대로 <b>자동 저장</b>됩니다. 따로 저장 단추를 누르지 않아도 됩니다.</li>'+
-    '<li>어느 화면에서든 왼쪽 위 <b>집 모양(통역일지)</b>을 누르면 처음 화면(기록 목록)으로 돌아갑니다.</li>'+
+    '<li>어느 화면에서든 왼쪽 위 <b>업무일지 아이콘</b>을 누르면 처음 화면(기록 목록)으로 돌아갑니다.</li>'+
     '<li>맨 위 노란 띠에 <b>남은 항목</b>이 보입니다. 누르면 그 칸으로 이동합니다.</li>'+
     '<li>같은 의뢰인·장소가 반복되면 <b>이전 기록에서 불러오기</b>를 쓰세요. 날짜·시간·내용·결과만 새로 적으면 됩니다.</li>'+
     '<li>결과가 아직 정해지지 않았으면 <b>결과 미확정</b>에 체크합니다.</li>'+
     '<li><b>참석자</b>(선택): 이름을 적고 <b>추가</b>. 빼려면 이름의 <b>×</b>를 누릅니다. 전에 적은 이름은 <b>＋ 이름</b>으로 바로 추가됩니다.</li>'+
-    '<li>새벽·오전·오후·저녁 분은 기존 통역일지가 자동 계산하므로 입력하지 않습니다.</li></ol>'],
+    '<li>새벽·오전·오후·저녁 분은 기존 시스템가 자동 계산하므로 입력하지 않습니다.</li></ol>'],
   ["status", "표시의 뜻", '<dl class="copy">'+
     '<div><dt>작성 중</dt><dd>필수 항목이 남아 있습니다.</dd><span></span></div>'+
-    '<div><dt>입력 대기</dt><dd>모두 채웠습니다. 사무실에서 기존 통역일지에 입력할 차례입니다.</dd><span></span></div>'+
-    '<div><dt>입력 완료</dt><dd>기존 통역일지에 등록을 마쳤습니다.</dd><span></span></div>'+
-    '<div><dt>수정 반영 필요</dt><dd>입력 완료 뒤 내용이 바뀌었습니다. 기존 통역일지의 해당 건도 고쳐 주세요.</dd><span></span></div>'+
+    '<div><dt>입력 대기</dt><dd>모두 채웠습니다. 사무실에서 기존 시스템에 입력할 차례입니다.</dd><span></span></div>'+
+    '<div><dt>입력 완료</dt><dd>기존 시스템에 등록을 마쳤습니다.</dd><span></span></div>'+
+    '<div><dt>수정 반영 필요</dt><dd>입력 완료 뒤 내용이 바뀌었습니다. 기존 시스템의 해당 건도 고쳐 주세요.</dd><span></span></div>'+
     '<div><dt>비교 필요</dt><dd>두 기기에서 같은 칸을 다르게 고쳤습니다. 기록을 열어 남길 내용을 고르세요.</dd><span></span></div>'+
     '<div><dt>모두 저장됨</dt><dd>센터 구글 시트에 저장되었습니다.</dd><span></span></div>'+
     '<div><dt>보낼 기록 N건</dt><dd>인터넷이 없어 휴대폰에 보관 중입니다. 연결되면 자동으로 보냅니다.</dd><span></span></div></dl>'],
   ["pc", "사무실 PC에서 기존 통역·상담일지에 입력하기", '<p><b>처음 한 번</b></p><ol><li>PC의 엣지·크롬에서 이 앱 주소를 열고 연결합니다(본인 링크 또는 연결 코드).</li>'+
-    '<li><b>설정</b> → 노란 <b>통역·상담일지 채우기</b> 단추를 즐겨찾기 막대로 끌어다 놓습니다. 즐겨찾기 막대는 <b>Ctrl+Shift+B</b>로 켭니다.</li>'+
-    '<li>같은 브라우저에서 협회 통역일지 사이트에 로그인해 둡니다.</li></ol>'+
+    '<li><b>설정</b> → 노란 <b>업무일지 채우기</b> 단추를 즐겨찾기 막대로 끌어다 놓습니다. 즐겨찾기 막대는 <b>Ctrl+Shift+B</b>로 켭니다.</li>'+
+    '<li>같은 브라우저에서 협회 사이트에 로그인해 둡니다.</li></ol>'+
     '<p><b>매번</b></p><ol><li>목록에서 <b>입력 대기</b> 기록을 누릅니다.</li>'+
     '<li><b>입력값 복사하고 등록 화면 열기</b>를 누릅니다. 기록 종류에 맞는 신규 작성 화면(통역관리·상담관리·수어교육관리·기타프로그램관리)이 열립니다.</li>'+
-    '<li>열린 등록 화면에서 즐겨찾기 <b>통역·상담일지 채우기</b>를 누르고 <b>Ctrl+V</b>.</li>'+
+    '<li>열린 등록 화면에서 즐겨찾기 <b>업무일지 채우기</b>를 누르고 <b>Ctrl+V</b>.</li>'+
     '<li>노란 칸을 확인하고, 의뢰인·참석자를 기존 화면에서 선택한 뒤 <b>등록</b>을 직접 누릅니다.</li>'+
     '<li>등록하면 앱에 <b>입력 완료</b>가 자동으로 표시됩니다. 앱 화면에서 <b>다음 입력 대기 기록 →</b>을 누르면 바로 다음 건으로 넘어갑니다. (앱의 등록 화면 열기 단추로 연 화면일 때만 자동이며, 그 밖에는 <b>등록 완료로 표시</b>를 직접 누릅니다.)</li></ol>'+
     '<p class="muted">채우기 단추가 보이지 않으면 브라우저 창을 크게 띄우세요. 좁은 창에서는 휴대폰 화면으로 바뀝니다.</p>'],
   ["offline", "인터넷이 없을 때", '<p>인터넷이 없어도 홈 화면 아이콘으로 열어 기록할 수 있습니다. 기록은 휴대폰에 보관되었다가 인터넷(데이터·와이파이)이 연결되면 자동으로 센터에 저장됩니다. 화면 위에 <b>모두 저장됨</b>이 보이면 끝난 것입니다.</p>'+
     '<p class="muted">처음 연결할 때는 인터넷이 필요합니다. 휴대폰의 <b>사생활 보호(시크릿) 모드</b>에서는 쓰지 마세요.</p>'],
   ["edit", "고치기 · 삭제", '<ul><li>목록에서 기록을 누르고 <b>수정</b>을 누릅니다.</li>'+
-    '<li>삭제는 작성 화면 아래 <b>삭제</b> 단추(또는 기록 화면 아래 <b>이 기록 삭제</b>). 기존 통역일지의 등록 건은 그대로 남으니 필요하면 그쪽에서 따로 지웁니다.</li>'+
+    '<li>삭제는 작성 화면 아래 <b>삭제</b> 단추(또는 기록 화면 아래 <b>이 기록 삭제</b>). 기존 시스템의 등록 건은 그대로 남으니 필요하면 그쪽에서 따로 지웁니다.</li>'+
     '<li>휴대폰을 바꾸거나 다른 사람이 쓸 때는 <b>설정 → 연결 해제</b>.</li></ul>'],
   ["admin", "관리자: 통역사 추가와 연결 관리", '<ul><li>위쪽 <b>관리</b> → 이름 입력 → <b>추가</b>.</li>'+
     '<li><b>링크 보내기</b>로 카카오톡·문자에 보냅니다. PC에서는 복사됩니다. <b>QR</b>을 눌러 화면을 찍게 해도 됩니다.</li>'+
@@ -952,9 +1005,9 @@ function settingsHTML(){
     '<p class="'+(offlineReady ? "okbox" : "note")+'">'+(offlineReady ? "인터넷 없는 곳에서도 열 수 있도록 준비되었습니다." : "오프라인 사용 준비 중입니다. 인터넷이 연결된 곳에서 한 번 더 열어 주세요.")+'</p>'+
     (!standalone() && !wide() ? '<div class="actions"><button type="button" id="st-install">홈 화면에 추가하는 방법</button></div>' : "")+
     '</section>'+
-    (wide() ? '<section class="panel" style="margin-top:14px" id="bm-help"><h2>사무실 PC: ‘통역·상담일지 채우기’ 즐겨찾기 설치</h2><p class="note">예전에 ‘통역일지 채우기’를 설치했다면 지우고 이 단추로 다시 설치하세요. 새 즐겨찾기는 앱이 고쳐질 때 자동으로 최신 기능을 씁니다.</p>'+
+    (wide() ? '<section class="panel" style="margin-top:14px" id="bm-help"><h2>사무실 PC: ‘업무일지 채우기’ 즐겨찾기 설치</h2><p class="note">이미 ‘통역·상담일지 채우기’를 설치했다면 그대로 쓰면 됩니다(이름만 다르고 같은 기능). 아주 예전의 ‘통역일지 채우기’만 지우고 다시 설치하세요.</p>'+
       '<ol class="steps"><li>키보드에서 <b>Ctrl+Shift+B</b>를 눌러 주소창 아래에 즐겨찾기 막대를 표시합니다.</li><li>아래 노란 단추를 마우스로 누른 채 즐겨찾기 막대까지 끌어다 놓습니다.</li><li>기존 통역·상담·수어교육·기타프로그램 신규 작성 화면에서 이 즐겨찾기를 누르면 채우기 창이 열립니다.</li></ol>'+
-      '<a class="bm" id="bm" href="#" draggable="true">통역·상담일지 채우기</a><p class="muted">입력칸만 채웁니다. 등록·저장 버튼은 누르지 않습니다.</p></section>' : "")+
+      '<a class="bm" id="bm" href="#" draggable="true">업무일지 채우기</a><p class="muted">입력칸만 채웁니다. 등록·저장 버튼은 누르지 않습니다.</p></section>' : "")+
     '<section class="panel" style="margin-top:14px"><h2>이 기기 연결 해제</h2><p class="muted">기기를 바꾸거나 다른 사람이 쓸 때 사용합니다. 저장되지 않은 기록이 있으면 먼저 인터넷에 연결하세요.</p>'+
     '<div class="actions"><button type="button" class="danger" id="logout">연결 해제</button></div></section>';
 }
@@ -1011,7 +1064,7 @@ if((F.trans_seq&&F.trans_seq.value)||(F.edu_seq&&F.edu_seq.value)){alert("이미
 var old=document.getElementById("ksl-fill");if(old)old.remove();
 var box=document.createElement("div");box.id="ksl-fill";
 box.style.cssText="position:fixed;right:14px;bottom:14px;z-index:2147483647;width:360px;max-height:60vh;overflow:auto;background:#fff;color:#172847;border:3px solid #184bad;border-radius:12px;padding:14px;font:14px/1.55 'Malgun Gothic',sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.3);text-align:left";
-box.innerHTML="<b style='font-size:16px'>통역·상담일지 채우기</b><p style='margin:6px 0'>앱에서 복사했다면 지금 <b>Ctrl+V</b>를 누르세요.</p><textarea aria-label='붙여넣기' style='width:100%;height:46px;font-size:12px'></textarea><div class='ksl-out'></div><p style='margin:8px 0 0;text-align:right'><button type='button' class='ksl-close'>닫기</button></p>";
+box.innerHTML="<b style='font-size:16px'>업무일지 채우기</b><p style='margin:6px 0'>앱에서 복사했다면 지금 <b>Ctrl+V</b>를 누르세요.</p><textarea aria-label='붙여넣기' style='width:100%;height:46px;font-size:12px'></textarea><div class='ksl-out'></div><p style='margin:8px 0 0;text-align:right'><button type='button' class='ksl-close'>닫기</button></p>";
 document.body.appendChild(box);
 var ta=box.querySelector("textarea"),out=box.querySelector(".ksl-out");ta.focus();
 box.querySelector(".ksl-close").onclick=function(){box.remove();};
@@ -1019,8 +1072,8 @@ ta.addEventListener("paste",function(e){var t=(e.clipboardData||window.clipboard
 ta.addEventListener("input",function(){if(ta.value.trim().charAt(0)==="{")run(ta.value);});
 function h(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 function run(t){
-var d;try{d=JSON.parse(t);}catch(x){out.innerHTML="<p style='color:#a02424'>통역일지 앱의 ‘입력값 복사’로 복사한 내용이 아닙니다.</p>";return;}
-if(!d||d.k!=="ksl-fill"){out.innerHTML="<p style='color:#a02424'>통역일지 앱에서 복사한 내용이 아닙니다.</p>";return;}
+var d;try{d=JSON.parse(t);}catch(x){out.innerHTML="<p style='color:#a02424'>업무일지 앱의 ‘입력값 복사’로 복사한 내용이 아닙니다.</p>";return;}
+if(!d||d.k!=="ksl-fill"){out.innerHTML="<p style='color:#a02424'>업무일지 앱에서 복사한 내용이 아닙니다.</p>";return;}
 var dk=KN[d.kind]?d.kind:"trans",isEduK=dk==="edu"||dk==="program";
 if(dk!==pageKind){out.innerHTML="<p style='color:#a02424'><b>"+KN[dk]+" 기록입니다.</b> "+KS[dk]+"의 신규 작성 화면을 열고 다시 눌러 주세요.</p>";return;}
 var P=dk==="counsel"?"상담":"수어통역",N=dk==="counsel"?"상담":"통역",PS=dk==="counsel"?"상담사":"수어통역사";
