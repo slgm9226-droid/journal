@@ -144,6 +144,13 @@ ul.list .item[aria-current=true]{background:var(--pale);border-radius:10px}
 .kind-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}.kind-head .kind-tag{margin:0}
 .kind-change{min-height:36px;padding:4px 12px;font-size:13px;border-radius:999px;background:#fff}
 .kind-pick{margin:0 0 14px;padding:12px;border:1px dashed var(--line,#d5dbe1);border-radius:12px;background:#f8fafb}
+.new-row #new-week{--kc:var(--k-week);grid-column:1 / -1}
+:root{--k-week:#3f6474}
+.kind-mini.kind-week{color:var(--k-week);background:transparent}.kind-tag.kind-week{background:var(--k-week);color:#fff}
+.week-day{border-top:1px solid var(--line,#e3e7eb);padding:12px 0 4px}.week-day:first-of-type{border-top:0}
+.week-day.today{background:linear-gradient(90deg,#f1f7f9,transparent);margin:0 -12px;padding:12px 12px 4px;border-radius:10px}
+.week-date{font-weight:800}.week-auto{margin:2px 0 6px;color:var(--muted);font-size:13px}
+.week-day textarea{min-height:58px;width:100%;box-sizing:border-box}
 .new-row-label{margin:2px 0 8px;color:var(--muted);font-size:14px;font-weight:700}
 .tabs{gap:6px;margin:12px 0 0}.tabs+.tabs{margin-top:8px}
 .tabs button{min-height:36px;padding:4px 12px;font-size:13px;border-radius:999px}
@@ -163,15 +170,21 @@ ul.list{margin-top:8px}
 <script>
 "use strict";
 const FORM_URLS = {trans:"http://www.kbdeaf.or.kr/trans_admin/trans_form.php?doc_type=R&sel_grp_code=", counsel:"http://www.kbdeaf.or.kr/trans_admin/trans_form.php?doc_type=C&sel_grp_code=",
-  edu:"http://www.kbdeaf.or.kr/trans_admin/edu_form.php?doc_type=R", program:"http://www.kbdeaf.or.kr/trans_admin/edu2_form.php?doc_type=R"};
+  edu:"http://www.kbdeaf.or.kr/trans_admin/edu_form.php?doc_type=R", program:"http://www.kbdeaf.or.kr/trans_admin/edu2_form.php?doc_type=R",
+  week:"http://www.kbdeaf.or.kr/trans_admin/week_form.php?doc_type=C&report_dt="};
+const formUrl = r => kindOf(r) === "week" ? FORM_URLS.week + encodeURIComponent(r.date || "") : FORM_URLS[kindOf(r)];
 const KINDS = {
   trans:{name:"통역", sys:"통역관리", person:"수어통역사", date:"수어통역일", place:"수어통역장소", request:"수어통역의뢰방법", targets:"수어통역대상", method:"수어통역방법", area:"수어통역영역", content:"수어통역내용", contentPh:"예) 진료 중 증상 설명과 검사 안내를 통역함", defaultMethod:"수어,음성통역"},
   edu:{name:"수어교육", sys:"수어교육관리", person:"강사명", date:"수어교육일", place:"교육장소", lecture:"강좌명", people:"수강인원", content:"수어교육내용", contentPh:"예) 지문자와 인사 표현을 익힘"},
   program:{name:"기타프로그램", sys:"기타프로그램관리", person:"강사명", date:"프로그램일", place:"장소", lecture:"프로그램명", people:"프로그램실인원", content:"프로그램내용", contentPh:"예) 장애인식개선 교육 — 농인 문화와 의사소통 방법 소개"},
+  week:{name:"주간업무", sys:"주간업무관리", person:"작성자", date:"주간업무일지일"},
   counsel:{name:"상담", sys:"상담관리", person:"상담사", date:"상담일", place:"상담장소", request:"상담의뢰방법", targets:"상담대상", method:"상담방법", area:"상담영역", content:"상담내용", contentPh:"예) 취업 면접 준비와 이력서 작성을 상담함", defaultMethod:"수어"}
 };
 const OPT_PROGRAM = {etcType:["장애인식개선교육","문화여가프로그램"]};
 const KIND_ORDER = ["trans","counsel","edu","program"];
+const LIST_KINDS = [...KIND_ORDER, "week"];
+const DAY_KEYS = ["w1","w2","w3","w4","w5","w6","w7"];
+const DAY_NAMES = ["월","화","수","목","금","토","일"];
 const OPT_COUNSEL = {method:["수어","음성","필기","중계","기타"], area:["행사상담","방송상담","법률상담","관공서상담","교육상담","일상생활상담","의료상담","기타"], consultType:["취업","사후관리","상담관리"]};
 const STORE_KEY = "ksl-journal-v3";
 const SCRIPT_URL = ((window.KSL_CONFIG || {}).scriptUrl || "").trim();
@@ -182,8 +195,8 @@ const OPT = {
   method:["수어,음성통역","중계통역","기타"],
   area:["행사통역","법률통역","교육통역","의료통역","방송통역","관공서통역","일상생활통역","취업알선통역","기타"]
 };
-const FIELDS = ["kind","interpreter","date","start","end","place","program","division","request","consultType","targets","method","area","client","content","result","pendingResult","deafNames","hearingNames","aidTeacher","group","etcType","students"];
-const LABEL = {kind:"종류",aidTeacher:"보조강사명",group:"단체명",etcType:"구분",students:"수강인원",consultType:"상담구분",interpreter:"수어통역사",date:"수어통역일",start:"시작 시각",end:"종료 시각",place:"수어통역장소",program:"프로그램명",division:"분류",request:"수어통역의뢰방법",targets:"수어통역대상",method:"수어통역방법",area:"수어통역영역",client:"의뢰인",content:"수어통역내용",result:"결과",pendingResult:"결과 미확정",deafNames:"참석인원(농인)",hearingNames:"참석인원(청인)",status:"상태"};
+const FIELDS = ["kind","w1","w2","w3","w4","w5","w6","w7","interpreter","date","start","end","place","program","division","request","consultType","targets","method","area","client","content","result","pendingResult","deafNames","hearingNames","aidTeacher","group","etcType","students"];
+const LABEL = {kind:"종류",w1:"월요일 기타",w2:"화요일 기타",w3:"수요일 기타",w4:"목요일 기타",w5:"금요일 기타",w6:"토요일 기타",w7:"일요일 기타",aidTeacher:"보조강사명",group:"단체명",etcType:"구분",students:"수강인원",consultType:"상담구분",interpreter:"수어통역사",date:"수어통역일",start:"시작 시각",end:"종료 시각",place:"수어통역장소",program:"프로그램명",division:"분류",request:"수어통역의뢰방법",targets:"수어통역대상",method:"수어통역방법",area:"수어통역영역",client:"의뢰인",content:"수어통역내용",result:"결과",pendingResult:"결과 미확정",deafNames:"참석인원(농인)",hearingNames:"참석인원(청인)",status:"상태"};
 const STATUS = {draft:"작성 중",ready:"입력 대기",done:"입력 완료"};
 const LIMIT = {place:40,result:200,interpreter:20,client:14};
 const AREA_HINTS = [
@@ -227,6 +240,12 @@ function weekday(date){
 }
 const isCounsel = r => !!r && r.kind === "counsel";
 const isEdu = r => !!r && (r.kind === "edu" || r.kind === "program");
+const isWeek = r => !!r && r.kind === "week";
+/* 주간업무: 주는 월요일부터 일요일까지. 날짜 문자열(YYYY-MM-DD) 기준으로 계산합니다. */
+function addDays(date, n){ const d = new Date(date+"T00:00:00Z"); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); }
+function mondayOf(date){ if (!weekday(date)) return ""; const d = new Date(date+"T00:00:00Z"); return addDays(date, -((d.getUTCDay()+6)%7)); }
+const weekDates = monday => DAY_KEYS.map((_,i) => addDays(monday, i));
+const mmdd = date => date ? date.slice(5).replace("-","/") : "";
 const kindOf = r => (r && KINDS[r.kind]) ? r.kind : "trans";
 const K = r => KINDS[kindOf(r)];
 const optsFor = (r, key) => (key === "etcType" ? OPT_PROGRAM.etcType : (isCounsel(r) && OPT_COUNSEL[key]) || OPT[key]);
@@ -245,6 +264,7 @@ function suggestArea(r){
 /* ---------- record model ---------- */
 function blankRecord(kind="trans"){
   kind = KINDS[kind] ? kind : "trans";
+  if (kind === "week") return {...blankRecordShape(), id:makeId(), kind, owner:S.settings.name, interpreter:S.settings.name, date:mondayOf(koreaDate()), w7:"일요일 휴일", created:nowIso(), updated:nowIso()};
   if (kind === "edu" || kind === "program") return {...blankRecordShape(), id:makeId(), kind, owner:S.settings.name, interpreter:S.settings.name, date:koreaDate(), created:nowIso(), updated:nowIso()};
   return {id:makeId(), kind, owner:S.settings.name, status:"draft", interpreter:S.settings.name, date:koreaDate(), start:"", end:"",
     place:"", program:"", division:"", request:"", consultType:"", targets:S.settings.defaultTargets === false ? [] : ["농인","청인"], method:S.settings.defaultMethod === false ? "" : KINDS[kind].defaultMethod, area:"",
@@ -263,10 +283,15 @@ function normalize(v){
   for (const k of Object.keys(r)) if (typeof r[k] === "string") r[k] = r[k].slice(0,4000);
   return r;
 }
-function blankRecordShape(){ return {id:"",kind:"trans",consultType:"",aidTeacher:"",group:"",etcType:"",students:"",owner:"",status:"draft",interpreter:"",date:"",start:"",end:"",place:"",program:"",division:"",request:"",targets:[],method:"",area:"",client:"",content:"",result:"",pendingResult:false,deafNames:"",hearingNames:"",needsCorrection:false,created:"",updated:"",rev:""}; }
+function blankRecordShape(){ return {id:"",kind:"trans",w1:"",w2:"",w3:"",w4:"",w5:"",w6:"",w7:"",consultType:"",aidTeacher:"",group:"",etcType:"",students:"",owner:"",status:"draft",interpreter:"",date:"",start:"",end:"",place:"",program:"",division:"",request:"",targets:[],method:"",area:"",client:"",content:"",result:"",pendingResult:false,deafNames:"",hearingNames:"",needsCorrection:false,created:"",updated:"",rev:""}; }
 function missing(r){
   const m = [];
   const L = K(r);
+  if (isWeek(r)) {
+    if (!weekday(r.date) || mondayOf(r.date) !== r.date) m.push(["date","주(월요일)"]);
+    if (!DAY_KEYS.some(k => r[k].trim())) m.push(["w1","요일별 기타 내용"]);
+    return m;
+  }
   if (isEdu(r)) {
     if (!r.interpreter.trim()) m.push(["interpreter",L.person]);
     if (!weekday(r.date)) m.push(["date",L.date]);
@@ -293,6 +318,7 @@ function missing(r){
 }
 function warnings(r){
   const w = [];
+  if (isWeek(r)) return w;
   if (isEdu(r)) {
     const L = K(r);
     for (const [k,label,max] of [["place",L.place,70],["program",L.lecture,40],["group","단체명",40],["aidTeacher","보조강사명",40],["interpreter","강사명",20]])
@@ -550,14 +576,14 @@ function bindInstall(){
 /* ---------- list ---------- */
 function listHTML(){
   const mine = visibleItems().filter(it => view.owner === "all" || !isAdmin() || it.rec.owner === S.settings.name || it.dirty);
-  const kindsHere = KIND_ORDER.filter(k => mine.some(it => kindOf(it.rec) === k));
+  const kindsHere = LIST_KINDS.filter(k => mine.some(it => kindOf(it.rec) === k));
   if (view.kind !== "all" && !kindsHere.includes(view.kind)) view.kind = "all";
   const all = mine.filter(it => view.kind === "all" || kindOf(it.rec) === view.kind);
   const groups = {active: all.filter(it => it.rec.status !== "done" || it.rec.needsCorrection || it.theirs), done: all.filter(it => it.rec.status === "done" && !it.rec.needsCorrection && !it.theirs)};
   const shown = groups[view.filter].sort((a,b) => (b.rec.date+b.rec.start).localeCompare(a.rec.date+a.rec.start) || b.rec.updated.localeCompare(a.rec.updated));
   const ready = groups.active.filter(it => it.rec.status === "ready").length;
   return '<h2 id="list-h" tabindex="-1">'+esc(S.settings.name)+'님 기록</h2>'+
-    '<p class="new-row-label">새 기록</p><div class="new-row"><button type="button" class="primary big" id="new" aria-label="새 통역 기록">통역</button><button type="button" class="primary big counsel" id="new-counsel" aria-label="새 상담 기록">상담</button><button type="button" class="primary big edu" id="new-edu" aria-label="새 수어교육 기록">수어교육</button><button type="button" class="primary big program" id="new-program" aria-label="새 기타프로그램 기록">기타프로그램</button></div>'+
+    '<p class="new-row-label">새 기록</p><div class="new-row"><button type="button" class="primary big" id="new" aria-label="새 통역 기록">통역</button><button type="button" class="primary big counsel" id="new-counsel" aria-label="새 상담 기록">상담</button><button type="button" class="primary big edu" id="new-edu" aria-label="새 수어교육 기록">수어교육</button><button type="button" class="primary big program" id="new-program" aria-label="새 기타프로그램 기록">기타프로그램</button><button type="button" class="primary big week" id="new-week" aria-label="이번 주 주간업무일지 열기">이번 주 주간업무일지</button></div>'+
     (storageOk ? "" : '<p class="note">이 브라우저에 저장할 수 없습니다. 사생활 보호 모드인지 확인하세요.</p>')+
     (isAdmin() ? '<div class="tabs" role="group" aria-label="통역사"><button type="button" data-owner="mine" aria-pressed="'+(view.owner==="mine")+'">내 기록</button><button type="button" data-owner="all" aria-pressed="'+(view.owner==="all")+'">모든 통역사</button></div>' : "")+
     (kindsHere.length > 1 ? '<div class="tabs" role="group" aria-label="기록 종류"><button type="button" data-kind="all" aria-pressed="'+(view.kind==="all")+'">전체</button>'+kindsHere.map(k => '<button type="button" data-kind="'+k+'" aria-pressed="'+(view.kind===k)+'">'+KINDS[k].name+'</button>').join("")+'</div>' : "")+
@@ -566,8 +592,8 @@ function listHTML(){
       const r = it.rec; const miss = missing(r);
       const chip = it.theirs ? '<span class="chip warn">비교 필요</span>' : r.needsCorrection ? '<span class="chip warn">수정 반영 필요</span>' :
         '<span class="chip '+r.status+'">'+STATUS[r.status]+(r.status==="draft" && miss.length ? " "+miss.length : "")+'</span>';
-      const sub = [r.date ? r.date.slice(5).replace("-","/")+"("+weekday(r.date)+")" : "", r.start && r.end ? r.start+"~"+r.end : "", isEdu(r) ? r.etcType : r.division, isEdu(r) ? (splitNames(r.students).length ? splitNames(r.students).length+"명" : "") : r.area, r.owner !== S.settings.name ? r.owner : "", it.dirty ? "저장 대기" : ""].filter(Boolean).join(" · ") + (r.status === "draft" && miss.length && !it.theirs ? "\n남은 항목: " + miss.map(m => m[1]).join(", ") : "");
-      return '<li><button type="button" class="item" data-open="'+esc(r.id)+'" aria-current="'+(view.id===r.id)+'"><span><span class="kind-mini kind-'+kindOf(r)+'">'+K(r).name+'</span> '+(isEdu(r) ? esc(r.program || r.group || r.place || "제목 없는 기록")+(r.group && r.program ? " · "+esc(r.group) : "") : esc(r.client || r.place || r.content.slice(0,24) || "제목 없는 기록")+(r.place && r.client ? " · "+esc(r.place) : ""))+'</span>'+chip+'<small>'+esc(sub)+'</small></button></li>';
+      const sub = isWeek(r) ? [mmdd(r.date)+"~"+mmdd(addDays(r.date||"2000-01-03",6)), DAY_KEYS.filter(k => r[k].trim()).length+"일 작성", r.owner !== S.settings.name ? r.owner : "", it.dirty ? "저장 대기" : ""].filter(Boolean).join(" · ") : [r.date ? r.date.slice(5).replace("-","/")+"("+weekday(r.date)+")" : "", r.start && r.end ? r.start+"~"+r.end : "", isEdu(r) ? r.etcType : r.division, isEdu(r) ? (splitNames(r.students).length ? splitNames(r.students).length+"명" : "") : r.area, r.owner !== S.settings.name ? r.owner : "", it.dirty ? "저장 대기" : ""].filter(Boolean).join(" · ") + (r.status === "draft" && miss.length && !it.theirs ? "\n남은 항목: " + miss.map(m => m[1]).join(", ") : "");
+      return '<li><button type="button" class="item" data-open="'+esc(r.id)+'" aria-current="'+(view.id===r.id)+'"><span><span class="kind-mini kind-'+kindOf(r)+'">'+K(r).name+'</span> '+(isWeek(r) ? esc(mmdd(r.date)+"("+weekday(r.date)+") 주 주간업무일지") : isEdu(r) ? esc(r.program || r.group || r.place || "제목 없는 기록")+(r.group && r.program ? " · "+esc(r.group) : "") : esc(r.client || r.place || r.content.slice(0,24) || "제목 없는 기록")+(r.place && r.client ? " · "+esc(r.place) : ""))+'</span>'+chip+'<small>'+esc(sub)+'</small></button></li>';
     }).join("")+'</ul>' : (view.filter==="active" && !visibleItems().length ? '<div class="empty"><p style="margin:0 0 10px">아직 기록이 없습니다. 통역·상담·수어교육·기타프로그램이 끝나면 위의 <b>새 기록</b> 단추에서 종류를 골라 기록하세요.</p><button type="button" id="first-help">사용방법 보기</button></div>' :
       '<p class="empty">'+(view.filter==="active" ? "진행 중인 기록이 없습니다." : "입력 완료한 기록이 없습니다.")+'</p>'));
 }
@@ -577,6 +603,11 @@ function bindList(){
   $("#new-counsel")?.addEventListener("click", () => startNew("counsel"));
   $("#new-edu")?.addEventListener("click", () => startNew("edu"));
   $("#new-program")?.addEventListener("click", () => startNew("program"));
+  $("#new-week")?.addEventListener("click", () => {
+    const mon = mondayOf(koreaDate());
+    const found = findWeek(mon, S.settings.name);
+    if (found) go("edit", found.rec.id); else startNew("week");
+  });
   document.querySelectorAll("[data-kind]").forEach(b => b.onclick = () => { view.kind = b.dataset.kind; render(false); });
   $("#first-help")?.addEventListener("click", () => go("help"));
   document.querySelectorAll("[data-filter]").forEach(b => b.onclick = () => { view.filter = b.dataset.filter; render(false); });
@@ -587,6 +618,7 @@ function bindList(){
   });
 }
 
+const findWeek = (monday, owner, except) => S.items.find(it => it !== except && isWeek(it.rec) && it.rec.status !== "deleted" && it.rec.date === monday && it.rec.owner === owner) || null;
 /* ---------- edit (phone-first single form) ---------- */
 function chipsHTML(key, multi, suggestion, rec){
   return '<div class="chips" role="group" aria-labelledby="lg-'+key+'">'+optsFor(rec, key).map(o =>
@@ -601,7 +633,7 @@ function recentValues(key, limit=6){
   }
   return out;
 }
-function hasContent(item){ return item.dirty || item.base || item.rec.content || item.rec.place || item.rec.client; }
+function hasContent(item){ if (isWeek(item.rec)) return !!(item.dirty || item.base); return item.dirty || item.base || item.rec.content || item.rec.place || item.rec.client; }
 function eduEditHTML(item){
   const r = item.rec; const L = K(r); const fresh = !hasContent(item);
   const recent = S.items.filter(it => it !== item && it.rec.owner === S.settings.name && it.rec.status !== "deleted" && it.rec.kind === r.kind && (it.rec.program || it.rec.group)).sort((a,b) => b.rec.updated.localeCompare(a.rec.updated)).slice(0,8);
@@ -654,7 +686,54 @@ function kindChanges(r, to){
   if ((changes.method === "" || !r.method) && S.settings.defaultMethod !== false && KINDS[to].defaultMethod && !isEdu(probe)) changes.method = KINDS[to].defaultMethod;
   return {changes, cleared};
 }
+/* 그날 앱에 적은 다른 기록: 통역·상담은 협회 시스템이 ‘통역및상담’ 칸을 자동으로 채우고, 수어교육·기타프로그램은 ‘기타’에 넣을 수 있게 단추로 보여 줍니다. */
+function dayRecords(owner, date){
+  return S.items.filter(it => !isWeek(it.rec) && it.rec.status !== "deleted" && it.rec.owner === owner && it.rec.date === date)
+    .sort((a,b) => (a.rec.start||"").localeCompare(b.rec.start||""));
+}
+const weekLine = r => isEdu(r) ? K(r).name+" - "+(r.program || r.group || r.place || "") : "";
+function weekPhrases(item){
+  const count = new Map();
+  for (const it of S.items) {
+    if (it === item || !isWeek(it.rec) || it.rec.status === "deleted" || it.rec.owner !== item.rec.owner) continue;
+    for (const k of DAY_KEYS) for (const line of it.rec[k].split(/\n/)) { const v = line.trim(); if (v && v.length <= 40 && !/^(토요일 휴무|일요일 휴일)$/.test(v)) count.set(v, (count.get(v)||0)+1); }
+  }
+  return [...count.entries()].sort((a,b) => b[1]-a[1]).slice(0,6).map(e => e[0]);
+}
+function weekEditHTML(item){
+  const r = item.rec; const mon = mondayOf(r.date) || mondayOf(koreaDate());
+  const today = koreaDate(); const phrases = weekPhrases(item);
+  const dates = weekDates(mon);
+  const other = findWeek(r.date, r.owner, item);
+  return '<h2 tabindex="-1" class="sr">주간업무일지 작성</h2>'+
+  '<div class="sticky-top" id="state"></div>'+
+  '<form id="ed" class="panel" autocomplete="off" novalidate>'+
+  '<div class="kind-head"><p class="kind-tag kind-week">주간업무일지</p></div>'+
+  '<p class="muted" style="margin-top:0">협회 주간업무일지의 <b>통역및상담</b> 칸은 통역관리·상담관리에 등록한 건으로 협회 시스템이 자동으로 채웁니다. 여기에는 요일별 <b>기타</b> 업무만 적으세요.</p>'+
+  '<h3>주</h3>'+
+  '<div class="row"><label class="f">주 시작일 (월요일)<input type="date" name="weekpick" value="'+esc(r.date)+'"></label>'+
+  '<div class="f" style="align-self:end"><div class="chips small"><button type="button" data-week="-7">지난 주</button><button type="button" data-week="this">이번 주</button><button type="button" data-week="7">다음 주</button></div></div></div>'+
+  '<p class="calc" id="calc">'+esc(mmdd(dates[0])+"(월) ~ "+mmdd(dates[6])+"(일)")+'</p>'+
+  (other ? '<p class="note">이 주의 주간업무일지가 이미 있습니다. <button type="button" data-openweek="'+esc(other.rec.id)+'">그 일지 열기</button></p>' : "")+
+  dates.map((d,i) => {
+    const k = DAY_KEYS[i]; const recs = dayRecords(r.owner, d);
+    const auto = recs.filter(it => !isEdu(it.rec)); const edu = recs.filter(it => isEdu(it.rec));
+    const quick = [...(i === 5 ? ["토요일 휴무"] : i === 6 ? ["일요일 휴일"] : []), "개인연차 휴가", ...phrases].filter((v,j,a) => a.indexOf(v) === j && !r[k].split(/\n/).map(x => x.trim()).includes(v));
+    return '<div class="week-day'+(d === today ? " today" : "")+'">'+
+      '<label class="f" for="wd-'+k+'"><span class="week-date">'+mmdd(d)+' ('+DAY_NAMES[i]+')'+(d === today ? ' <span class="chip ready">오늘</span>' : "")+'</span></label>'+
+      (auto.length ? '<p class="week-auto">통역및상담 (자동): '+auto.map(it => esc(K(it.rec).name+" "+(it.rec.start || "")+" "+(it.rec.client || it.rec.place || ""))+(it.rec.status === "done" ? "" : ' <span class="chip warn">미등록</span>')).join(", ")+'</p>' : "")+
+      '<textarea id="wd-'+k+'" name="'+k+'" rows="2" maxlength="2000" placeholder="기타 업무 (예: 직원회의, 자원봉사자 실적 등록)">'+esc(r[k])+'</textarea>'+
+      '<div class="chips small" style="margin-top:6px">'+
+        edu.map(it => { const line = weekLine(it.rec); return r[k].includes(line) ? "" : '<button type="button" data-append="'+k+'" data-value="'+esc(line)+'">＋ '+esc(line)+'</button>'; }).join("")+
+        quick.slice(0,5).map(v => '<button type="button" data-append="'+k+'" data-value="'+esc(v)+'">'+esc(v)+'</button>').join("")+
+      '</div></div>';
+  }).join("")+
+  '</form>'+
+  '<div class="bottom"><div class="actions" style="margin:0"><button type="button" class="primary" id="done-edit" style="flex:1;min-height:52px">저장하고 목록으로</button>'+
+  (wide() ? '<button type="button" id="to-detail" style="min-height:52px">PC 입력 화면</button>' : "")+'<button type="button" class="danger" id="del-edit" style="min-height:52px">삭제</button></div></div>';
+}
 function editHTML(item){
+  if (isWeek(item.rec)) return weekEditHTML(item);
   if (isEdu(item.rec)) return eduEditHTML(item);
   const r = item.rec; const fresh = !hasContent(item);
   const L = K(r);
@@ -725,8 +804,9 @@ function bindEdit(item){
       const k = b.dataset.chip, v = b.dataset.value;
       b.setAttribute("aria-pressed", String(k === "targets" ? r.targets.includes(v) : r[k] === v));
     });
-    const info = isEdu(r) ? null : timeInfo(r);
-    if (isEdu(r)) { const mins = eduMinutes(r); $("#calc").textContent = mins !== null ? "총 "+mins+"분 — 기존 화면과 같은 계산" : r.start && r.end ? "종료 시각은 시작보다 늦어야 합니다 (자정을 넘길 수 없음)." : "시작·종료를 입력하면 총 시간을 계산합니다."; }
+    const info = isEdu(r) || isWeek(r) ? null : timeInfo(r);
+    if (isWeek(r)) {}
+    else if (isEdu(r)) { const mins = eduMinutes(r); $("#calc").textContent = mins !== null ? "총 "+mins+"분 — 기존 화면과 같은 계산" : r.start && r.end ? "종료 시각은 시작보다 늦어야 합니다 (자정을 넘길 수 없음)." : "시작·종료를 입력하면 총 시간을 계산합니다."; }
     else $("#calc").textContent = info ? "총 "+info.total+"분"+(info.overnight ? " (다음 날 "+r.end+" 종료)" : "")+" · "+["새벽","오전","오후","저녁"].map((n,i) => info.bands[i] ? n+" "+info.bands[i]+"분" : "").filter(Boolean).join(", ")+" — 기존 시스템과 같은 기준" :
       r.start && r.end ? "시작과 종료 시각이 같습니다." : "시작·종료를 입력하면 시간대별 분을 계산합니다.";
     const area = $("#area-chips");
@@ -752,8 +832,15 @@ function bindEdit(item){
     const t = e.target; if (e.key !== "Enter" || !t.dataset || !t.dataset.personInput) return;
     e.preventDefault(); const key = t.dataset.personInput; const v = t.value; t.value = ""; if (v.trim()) addPeople(key, v); $("#people-"+key+" input").focus();
   });
+  form.addEventListener("change", e => {
+    const t = e.target; if (t.name !== "weekpick") return;
+    const mon = mondayOf(t.value);
+    if (!mon) { t.value = item.rec.date; return; }
+    if (mon !== t.value) toast("주는 월요일부터 시작합니다. "+mmdd(mon)+"(월) 주로 맞췄습니다.");
+    commit(item, {date: mon}); render(false);
+  });
   form.addEventListener("input", e => {
-    const t = e.target; if (!t.name) return;
+    const t = e.target; if (!t.name || t.name === "weekpick") return;
     set({[t.name]: t.type === "checkbox" ? t.checked : t.value});
   });
   editClick = function(e){
@@ -769,6 +856,18 @@ function bindEdit(item){
     if (b.dataset.personAdd) { const key = b.dataset.personAdd; const inp = $("#people-"+key+" input"); const v = inp.value; inp.value = ""; if (v.trim()) addPeople(key, v); else inp.focus(); return; }
     if (b.dataset.personPick) { addPeople(b.dataset.personPick, b.dataset.value); return; }
     if (b.dataset.personRm) { const key = b.dataset.personRm; set({[key]: splitNames(item.rec[key]).filter(n => n !== b.dataset.value).join(", ")}); return; }
+    if (b.dataset.append) {
+      const k = b.dataset.append, cur = item.rec[k].replace(/\s+$/,"");
+      set({[k]: cur ? cur+"\n"+b.dataset.value : b.dataset.value}); render(false); return;
+    }
+    if (b.dataset.week) {
+      const mon = b.dataset.week === "this" ? mondayOf(koreaDate()) : addDays(item.rec.date || mondayOf(koreaDate()), +b.dataset.week);
+      set({date: mon}); render(false); return;
+    }
+    if (b.dataset.openweek) {
+      if (!hasContent(item)) S.items = S.items.filter(it => it !== item);
+      go("edit", b.dataset.openweek); return;
+    }
     if (b.dataset.now) { const v = koreaTime(); form[b.dataset.now].value = v; set({[b.dataset.now]: v}); return; }
     if (b.dataset.copyfrom) {
       const src = findItem(b.dataset.copyfrom)?.rec; if (!src) return;
@@ -793,7 +892,7 @@ function bindEdit(item){
     if (b.id === "del-edit") {
       const r = item.rec;
       if (!hasContent(item) && !r.start && !r.end) { S.items = S.items.filter(it => it !== item); persist(); go("list"); return; }
-      const label = r.client || r.place || "이 기록";
+      const label = isWeek(r) ? mmdd(r.date)+" 주 주간업무일지" : r.client || r.place || "이 기록";
       if (!confirm(label+" 기록을 삭제할까요?"+(r.status === "done" ? "\n\n앱에서만 삭제됩니다. 기존 시스템에 등록한 건은 그대로 남습니다." : "\n\n삭제하면 되돌릴 수 없습니다."))) return;
       commit(item, {status:"deleted"});
       if (!item.base) S.items = S.items.filter(it => it !== item);
@@ -814,6 +913,7 @@ function bindEdit(item){
 
 /* ---------- detail / PC entry ---------- */
 function fillPayload(r){
+  if (isWeek(r)) return JSON.stringify({k:"ksl-fill", v:3, kind:"week", id:r.id, date:r.date, interpreter:r.interpreter, days:DAY_KEYS.map(k => r[k])});
   const info = timeInfo(r);
   return JSON.stringify({k:"ksl-fill", v:3, kind:kindOf(r), consultType:r.consultType, aidTeacher:r.aidTeacher, group:r.group, etcType:r.etcType, students:r.students, total:eduMinutes(r), id:r.id, interpreter:r.interpreter, date:r.date, start:r.start, end:r.end,
     bands: info ? info.bands : null, place:r.place, program:r.program, division:r.division, request:r.request, targets:r.targets,
@@ -824,7 +924,10 @@ function detailHTML(item){
   if (item.theirs) return conflictHTML(item);
   const L = K(r);
   const em = eduMinutes(r);
-  const rows = isEdu(r) ? [
+  const wdates = isWeek(r) ? weekDates(r.date || mondayOf(koreaDate())) : [];
+  const pend = isWeek(r) ? wdates.flatMap(d => dayRecords(r.owner, d)).filter(it => !isEdu(it.rec) && it.rec.status !== "done") : [];
+  if (isWeek(r) && pend.length) warn.push("이 주의 통역·상담 기록 "+pend.length+"건이 아직 기존 시스템에 등록되지 않았습니다. 그 기록들을 먼저 등록해야 주간업무일지의 ‘통역및상담’ 칸에 나타납니다.");
+  const rows = isWeek(r) ? wdates.map((d,i) => [mmdd(d)+" ("+DAY_NAMES[i]+") 기타", r[DAY_KEYS[i]], true]) : isEdu(r) ? [
     [L.person, r.interpreter, true], ["보조강사명", r.aidTeacher, true], [L.lecture, r.program, true], ["단체명", r.group, true],
     [L.date, r.date, false], ["시간", r.start && r.end ? r.start+" ~ "+r.end+(em !== null ? " · 총 "+em+"분 (기존 화면이 자동 계산)" : "") : "", false],
     [L.place, r.place, true], ...(r.kind === "program" ? [["구분", r.etcType, false]] : []), [L.people, r.students, true],
@@ -838,7 +941,7 @@ function detailHTML(item){
     [L.content, r.content, true], ["결과", r.result + (r.pendingResult ? (r.result ? "\n" : "")+"(결과 미확정)" : ""), true],
     ["의뢰인", r.client, true], ["참석 농인", r.deafNames, true], ["참석 청인", r.hearingNames, true]
   ];
-  return '<h2 id="detail-h" tabindex="-1"><span class="kind-mini kind-'+kindOf(r)+'">'+L.name+'</span> '+esc((isEdu(r) ? r.program : r.client) || r.place || L.name+" 기록")+' <span class="chip '+r.status+'">'+STATUS[r.status]+'</span></h2>'+
+  return '<h2 id="detail-h" tabindex="-1"><span class="kind-mini kind-'+kindOf(r)+'">'+L.name+'</span> '+esc(isWeek(r) ? mmdd(r.date)+"("+weekday(r.date)+") 주 주간업무일지" : (isEdu(r) ? r.program : r.client) || r.place || L.name+" 기록")+' <span class="chip '+r.status+'">'+STATUS[r.status]+'</span></h2>'+
     '<p class="muted">'+esc([r.owner && "작성 "+r.owner, item.dirty ? "저장 대기" : "", r.updated && "수정 "+new Date(r.updated).toLocaleString("ko-KR",{timeZone:"Asia/Seoul",dateStyle:"short",timeStyle:"short"})].filter(Boolean).join(" · "))+'</p>'+
     (item.error ? '<p class="note">이 기록을 저장하지 못했습니다('+esc(item.error)+'). 관리자에게 알려 주세요.</p>' : "")+
     (autoDone && autoDone.id === r.id && r.status === "done" ? '<div class="okbox"><b>기존 시스템에 등록되어 입력 완료로 표시했습니다.</b><div class="actions" style="margin-top:8px">'+(nextReady(r.id) ? '<button type="button" class="primary" id="go-next">다음 입력 대기 기록 →</button>' : '<span>남은 입력 대기 기록이 없습니다.</span>')+'<button type="button" class="ghost" id="undo-auto">되돌리기</button></div></div>' : "")+
@@ -849,7 +952,7 @@ function detailHTML(item){
     (r.status !== "done" || r.needsCorrection ? '<h3>기존 시스템('+L.sys+')에 입력하기</h3>'+
       (wide() ? '<ol class="steps"><li><button type="button" class="primary" id="copy-open"'+(miss.length ? " disabled" : "")+'>입력값 복사하고 등록 화면 열기</button>'+(miss.length ? '<div class="muted">남은 항목을 먼저 채우세요.</div>' : "")+'</li>'+
         '<li>열린 등록 화면에서 즐겨찾기 막대의 <b>업무일지 채우기</b>를 누르고 <b>Ctrl+V</b>를 누릅니다. <a href="#" id="howto-bm">즐겨찾기 설치 방법</a></li>'+
-        '<li>노랗게 표시된 칸을 확인하고, 의뢰인과 참석자를 기존 화면에서 선택한 뒤 <b>등록</b>을 직접 누릅니다.</li>'+
+        (isWeek(r) ? '<li>노랗게 표시된 기타 칸과 통역및상담 칸을 확인한 뒤 <b>등록</b>을 직접 누릅니다.</li>' : '<li>노랗게 표시된 칸을 확인하고, 의뢰인과 참석자를 기존 화면에서 선택한 뒤 <b>등록</b>을 직접 누릅니다.</li>')+
         '<li><button type="button" id="mark-done"'+(miss.length && !r.needsCorrection ? " disabled" : "")+'>'+(r.needsCorrection ? "기존 시스템 수정 완료" : "등록 완료로 표시")+'</button></li></ol>' :
         '<p class="muted">사무실 PC에서 같은 주소를 열면 기존 시스템 화면을 자동으로 채울 수 있습니다.</p>') : '<div class="actions"><button type="button" id="reopen" class="ghost">입력 대기로 되돌리기</button></div>')+
     '<h3>항목별 내용</h3><dl class="copy">'+rows.map(([label,value,copy],i) => '<div><dt>'+esc(label)+'</dt><dd>'+esc(value || "—")+'</dd>'+(copy && value ? '<button type="button" data-copyrow="'+i+'">복사</button>' : "<span></span>")+'</div>').join("")+'</dl>'+
@@ -871,7 +974,7 @@ function bindDetail(item){
   $("#undo-auto")?.addEventListener("click", () => { const prev = autoDone && autoDone.prev; autoDone = null; commit(item, {status: prev ? prev.status : "ready", needsCorrection: prev ? prev.needsCorrection : false}); syncNow(); render(false); toast("입력 대기로 되돌렸습니다."); });
   $("#copy-open")?.addEventListener("click", async () => {
     const ok = await copyText(fillPayload(item.rec));
-    window.open(FORM_URLS[kindOf(item.rec)], "kbdeaf-form");
+    window.open(formUrl(item.rec), "kbdeaf-form");
     toast(ok ? "복사했습니다. 등록 화면에서 ‘업무일지 채우기’ → Ctrl+V" : "복사하지 못했습니다. 다시 눌러 주세요.");
   });
   $("#howto-bm")?.addEventListener("click", e => { e.preventDefault(); go("settings"); setTimeout(() => $("#bm-help")?.scrollIntoView(), 50); });
@@ -980,7 +1083,7 @@ const HELP = [
     '<li><b>갤럭시</b>: <b>앱 설치</b>를 누릅니다. 설치 단추가 없으면 크롬 ⋮ 메뉴 → <b>홈 화면에 추가</b>.</li>'+
     '<li><b>아이폰</b>: 사파리 <b>공유 단추 → 홈 화면에 추가</b>. 홈 화면 아이콘을 처음 열 때 링크와 함께 받은 <b>8자리 연결 코드</b>를 입력합니다.</li>'+
     '<li>그다음부터는 홈 화면의 <b>업무일지</b> 아이콘으로 엽니다.</li></ol>'],
-  ["field", "현장에서 기록하기", '<ol><li>처음 화면에서 종류를 골라 누릅니다: <b>통역</b>, <b>상담</b>, <b>수어교육</b>, <b>기타프로그램</b> (‘새 기록’ 아래 단추). 종류마다 기존 시스템 화면에 맞는 항목이 나옵니다.</li>'+
+  ["field", "현장에서 기록하기", '<ol><li>처음 화면에서 종류를 골라 누릅니다: <b>통역</b>, <b>상담</b>, <b>수어교육</b>, <b>기타프로그램</b>, <b>주간업무일지</b> (‘새 기록’ 아래 단추). 종류마다 기존 시스템 화면에 맞는 항목이 나옵니다.</li>'+
     '<li><b>수어교육·기타프로그램</b>: 강좌명(프로그램명)·장소·내용이 필수이고, 기타프로그램은 구분(장애인식개선교육·문화여가프로그램)도 고릅니다. 수강인원은 이름을 추가해 두면 PC에서 선택할 때 씁니다. 매주 같은 수업은 <b>이전 기록에서 불러오기</b>를 쓰세요.</li>'+
     '<li>시작·종료는 <b>지금</b> 단추로 넣고, 장소·의뢰인·분류·의뢰방법·통역내용부터 적습니다. 나머지는 나중에 채워도 됩니다.</li>'+
     '<li>종류를 잘못 골랐으면 작성 화면 맨 위 <b>종류 바꾸기</b>를 누르고 맞는 종류를 고릅니다. 날짜·시간·장소·내용은 그대로 옮겨지고, 그 종류에만 있는 항목만 새로 채우면 됩니다.</li>'+
@@ -991,6 +1094,11 @@ const HELP = [
     '<li>결과가 아직 정해지지 않았으면 <b>결과 미확정</b>에 체크합니다.</li>'+
     '<li><b>참석자</b>(선택): 이름을 적고 <b>추가</b>. 빼려면 이름의 <b>×</b>를 누릅니다. 전에 적은 이름은 <b>＋ 이름</b>으로 바로 추가됩니다.</li>'+
     '<li>새벽·오전·오후·저녁 분은 기존 시스템가 자동 계산하므로 입력하지 않습니다.</li></ol>'],
+  ["week", "주간업무일지", '<ol><li>처음 화면의 <b>이번 주 주간업무일지</b>를 누르면 이번 주 일지가 열립니다(없으면 새로 만듭니다). 한 주에 하나만 씁니다.</li>'+
+    '<li>요일마다 <b>기타</b> 업무(회의, 실적 등록, 연차, 교육 참석 등)를 그날그날 적습니다. 자주 쓰는 문구와 <b>개인연차 휴가</b>·<b>토요일 휴무</b>는 단추로 넣을 수 있습니다.</li>'+
+    '<li>그날 앱에 적은 <b>수어교육·기타프로그램</b>은 <b>＋</b> 단추로 기타 칸에 넣을 수 있습니다.</li>'+
+    '<li><b>통역및상담</b> 칸은 적지 않습니다. 통역관리·상담관리에 등록한 건을 협회 시스템이 자동으로 채웁니다. 그래서 그 주의 통역·상담을 <b>먼저 등록한 뒤</b> 주간업무일지를 등록하세요.</li>'+
+    '<li>사무실 PC에서 주간업무일지를 고르고 <b>입력값 복사하고 등록 화면 열기</b> → <b>업무일지 채우기</b> → <b>Ctrl+V</b> → 확인 후 <b>등록</b>.</li></ol>'],
   ["status", "표시의 뜻", '<dl class="copy">'+
     '<div><dt>작성 중</dt><dd>필수 항목이 남아 있습니다.</dd><span></span></div>'+
     '<div><dt>입력 대기</dt><dd>모두 채웠습니다. 사무실에서 기존 시스템에 입력할 차례입니다.</dd><span></span></div>'+
@@ -1093,9 +1201,9 @@ function FILLER(){
 (function(){
 var F=document.transForm;
 var APP=(document.currentScript&&document.currentScript.src)?new URL(document.currentScript.src).origin:"*";
-var path=location.pathname,pageKind=/edu2_form\.php/.test(path)?"program":/edu_form\.php/.test(path)?"edu":/trans_form\.php/.test(path)?((F&&F.doc_type&&F.doc_type.value==="C")?"counsel":"trans"):"";
-var KN={trans:"통역",counsel:"상담",edu:"수어교육",program:"기타프로그램"},KS={trans:"통역관리",counsel:"상담관리",edu:"수어교육관리",program:"기타프로그램관리"};
-if(!F||!pageKind){alert("기존 통역·상담·수어교육·기타프로그램의 신규 작성 화면에서 눌러 주세요.");return;}
+var path=location.pathname,pageKind=/week_form\.php/.test(path)?"week":/edu2_form\.php/.test(path)?"program":/edu_form\.php/.test(path)?"edu":/trans_form\.php/.test(path)?((F&&F.doc_type&&F.doc_type.value==="C")?"counsel":"trans"):"";
+var KN={trans:"통역",counsel:"상담",edu:"수어교육",program:"기타프로그램",week:"주간업무일지"},KS={trans:"통역관리",counsel:"상담관리",edu:"수어교육관리",program:"기타프로그램관리",week:"주간업무관리"};
+if(!F||!pageKind){alert("기존 통역·상담·수어교육·기타프로그램·주간업무일지의 작성 화면에서 눌러 주세요.");return;}
 if((F.trans_seq&&F.trans_seq.value)||(F.edu_seq&&F.edu_seq.value)){alert("이미 등록된 기록 화면입니다. ‘신규등록’ 화면에서 사용하세요.");return;}
 var old=document.getElementById("ksl-fill");if(old)old.remove();
 var box=document.createElement("div");box.id="ksl-fill";
@@ -1111,7 +1219,8 @@ function run(t){
 var d;try{d=JSON.parse(t);}catch(x){out.innerHTML="<p style='color:#a02424'>업무일지 앱의 ‘입력값 복사’로 복사한 내용이 아닙니다.</p>";return;}
 if(!d||d.k!=="ksl-fill"){out.innerHTML="<p style='color:#a02424'>업무일지 앱에서 복사한 내용이 아닙니다.</p>";return;}
 var dk=KN[d.kind]?d.kind:"trans",isEduK=dk==="edu"||dk==="program";
-if(dk!==pageKind){out.innerHTML="<p style='color:#a02424'><b>"+KN[dk]+" 기록입니다.</b> "+KS[dk]+"의 신규 작성 화면을 열고 다시 눌러 주세요.</p>";return;}
+if(dk!==pageKind){out.innerHTML="<p style='color:#a02424'><b>"+KN[dk]+" 기록입니다.</b> "+KS[dk]+"의 "+(dk==="week"?"작성":"신규 작성")+" 화면을 열고 다시 눌러 주세요.</p>";return;}
+if(dk==="week"){var rd=F.report_dt?F.report_dt.value:"";if(rd!==d.date){out.innerHTML="<p style='color:#a02424'><b>다른 주의 화면입니다.</b> 이 화면은 "+h(rd||"날짜 없음")+", 복사한 일지는 "+h(d.date)+"(월) 주입니다.</p><p><button type='button' class='ksl-goweek'>"+h(d.date)+" 주 화면으로 이동</button></p><p style='font-size:12px;margin:4px 0 0'>이동한 뒤 ‘업무일지 채우기’를 다시 누르고 Ctrl+V 하세요.</p>";box.querySelector(".ksl-goweek").onclick=function(){location.href="week_form.php?doc_type=C&report_dt="+encodeURIComponent(d.date);};return;}}
 var P=dk==="counsel"?"상담":"수어통역",N=dk==="counsel"?"상담":"통역",PS=dk==="counsel"?"상담사":"수어통역사";
 var done=[],warn=[],todo=[];
 function mark(el){el.style.background="#fff3b0";el.style.outline="2px solid #e0a73a";}
@@ -1122,7 +1231,15 @@ function text(name,val,label,max){var el=F.elements[name];if(!el){warn.push(labe
 function pick(name,label,val,map){var els=F.querySelectorAll("[name='"+name+"']"),hit=null;for(var i=0;i<els.length;i++){var lt=lab(els[i]);if(lt===val)hit=els[i];}
  if(!val){return;}if(!hit){warn.push(label+": ‘"+val+"’ 선택지를 찾지 못함");return;}hit.checked=true;mark(hit.parentNode||hit);try{hit.dispatchEvent(new Event("change",{bubbles:true}));}catch(x){}done.push(label);}
 function lab(el){var n=el.nextSibling,s="";while(n&&!(n.nodeType===1&&n.tagName==="INPUT")){s+=n.textContent||"";n=n.nextSibling;if(s.trim().length>10)break;}return s.replace(/\s+/g," ").trim();}
-if(isEduK){
+if(dk==="week"){
+var DN="월화수목금토일",changed=[];
+for(var wi=0;wi<7;wi++){var wel=F.elements["etc_content_"+(wi+1)],wv=(d.days&&d.days[wi])||"";if(!wel){warn.push(DN.charAt(wi)+"요일 기타: 입력칸을 찾지 못함");continue;}if(!wv)continue;
+ var wcur=wel.value.replace(/\s+$/,"");if(wcur&&wcur!==wv)changed.push(DN.charAt(wi));wel.value=wv;mark(wel);done.push(DN.charAt(wi)+"요일 기타");}
+if(changed.length)warn.push("이미 적혀 있던 "+changed.join("·")+"요일 기타 내용을 앱 내용으로 바꿨습니다. 확인하세요.");
+var tcn=0;for(var tj=1;tj<=7;tj++){var tel=F.elements["trans_content_"+tj];if(tel&&tel.value.trim())tcn++;}
+todo.push(tcn?"통역및상담 칸은 협회 시스템이 채운 그대로 두었습니다. 빠진 건이 없는지 확인하세요.":"통역및상담 칸이 비어 있습니다. 이 주의 통역·상담을 먼저 등록했는지 확인하세요.");
+d.client="";d.deafNames="";d.hearingNames="";
+}else if(isEduK){
 text("teacher_nm",d.interpreter,"강사명",20);text("aid_teacher_nm",d.aidTeacher,"보조강사명",40);text("lecture_nm",d.program,dk==="edu"?"강좌명":"프로그램명",40);text("location_grp_nm",d.group,"단체명",40);
 var me=/^(\d{4})-(\d{2})-(\d{2})$/.exec(d.date||"");
 if(me&&F.edu_dt){var de=new Date(+me[1],+me[2]-1,+me[3]),ve=null;try{ve=window.jQuery&&jQuery.datepicker?jQuery.datepicker.formatDate(jQuery.datepicker._defaults.dateFormat||"yy-mm-dd",de):null;}catch(x){ve=null;}if(!ve)ve=d.date;F.edu_dt.value=ve;mark(F.edu_dt);done.push("날짜");}
@@ -1178,6 +1295,12 @@ if(!F.__kslHooked){F.__kslHooked=true;
  var nativeSubmit=F.submit;F.submit=function(){notify();return nativeSubmit.call(F);};
  F.addEventListener("submit",function(e){setTimeout(function(){if(!e.defaultPrevented)notify();},0);});}
 out.innerHTML=html;ta.value="";ta.style.display="none";box.querySelector("p").style.display="none";
+if(dk==="week"&&!(F.modify&&F.modify.value)&&window.fetch){var wend=new Date(d.date+"T00:00:00Z");wend.setUTCDate(wend.getUTCDate()+6);wend=wend.toISOString().slice(0,10);
+ fetch("week_list.php?doc_type=C",{credentials:"same-origin"}).then(function(r){return r.text();}).then(function(t){
+  var re=/week_detail\('(\d+)'\)[^>]*>\s*([\d-]{10})/g,mm,hits=[];while((mm=re.exec(t))){if(mm[2]>=d.date&&mm[2]<=wend)hits.push(mm);}
+  if(!hits.length)return;var dv=document.createElement("div");dv.style.cssText="background:#fde8e8;color:#8a1f1f;padding:8px;border-radius:8px;margin:8px 0";
+  dv.innerHTML="<b>이 주의 주간업무일지가 이미 등록되어 있습니다.</b> 새로 등록하면 두 건이 됩니다. 기존 일지를 열어 고치려면: "+hits.map(function(x){return "<a href='week_form.php?modify="+x[1]+"&doc_type=C&page=1'>"+h(x[2])+" 일지 열기</a>";}).join(" ")+"<br><span style='font-size:12px'>연 뒤 ‘업무일지 채우기’를 다시 누르고 Ctrl+V 하세요.</span>";
+  out.insertBefore(dv,out.firstChild);}).catch(function(){});}
 var cb=box.querySelector(".ksl-client");if(cb)cb.onclick=function(){openPop("pop_deaf_list.php?person_type=&search_type=name&search="+encodeURIComponent(d.client||""),"target_member_detail");};
 Array.prototype.forEach.call(box.querySelectorAll(".ksl-person"),function(b){b.onclick=function(){
  var deaf=b.getAttribute("data-kind")==="deaf",nm=deaf?"reqPersonNm[]":"visitPersonNm[]",rows=document.getElementsByName(nm),idx=-1;

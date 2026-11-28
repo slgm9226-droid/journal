@@ -2,9 +2,9 @@
 (function(){
 var F=document.transForm;
 var APP=(document.currentScript&&document.currentScript.src)?new URL(document.currentScript.src).origin:"*";
-var path=location.pathname,pageKind=/edu2_form\.php/.test(path)?"program":/edu_form\.php/.test(path)?"edu":/trans_form\.php/.test(path)?((F&&F.doc_type&&F.doc_type.value==="C")?"counsel":"trans"):"";
-var KN={trans:"통역",counsel:"상담",edu:"수어교육",program:"기타프로그램"},KS={trans:"통역관리",counsel:"상담관리",edu:"수어교육관리",program:"기타프로그램관리"};
-if(!F||!pageKind){alert("기존 통역·상담·수어교육·기타프로그램의 신규 작성 화면에서 눌러 주세요.");return;}
+var path=location.pathname,pageKind=/week_form\.php/.test(path)?"week":/edu2_form\.php/.test(path)?"program":/edu_form\.php/.test(path)?"edu":/trans_form\.php/.test(path)?((F&&F.doc_type&&F.doc_type.value==="C")?"counsel":"trans"):"";
+var KN={trans:"통역",counsel:"상담",edu:"수어교육",program:"기타프로그램",week:"주간업무일지"},KS={trans:"통역관리",counsel:"상담관리",edu:"수어교육관리",program:"기타프로그램관리",week:"주간업무관리"};
+if(!F||!pageKind){alert("기존 통역·상담·수어교육·기타프로그램·주간업무일지의 작성 화면에서 눌러 주세요.");return;}
 if((F.trans_seq&&F.trans_seq.value)||(F.edu_seq&&F.edu_seq.value)){alert("이미 등록된 기록 화면입니다. ‘신규등록’ 화면에서 사용하세요.");return;}
 var old=document.getElementById("ksl-fill");if(old)old.remove();
 var box=document.createElement("div");box.id="ksl-fill";
@@ -20,7 +20,8 @@ function run(t){
 var d;try{d=JSON.parse(t);}catch(x){out.innerHTML="<p style='color:#a02424'>업무일지 앱의 ‘입력값 복사’로 복사한 내용이 아닙니다.</p>";return;}
 if(!d||d.k!=="ksl-fill"){out.innerHTML="<p style='color:#a02424'>업무일지 앱에서 복사한 내용이 아닙니다.</p>";return;}
 var dk=KN[d.kind]?d.kind:"trans",isEduK=dk==="edu"||dk==="program";
-if(dk!==pageKind){out.innerHTML="<p style='color:#a02424'><b>"+KN[dk]+" 기록입니다.</b> "+KS[dk]+"의 신규 작성 화면을 열고 다시 눌러 주세요.</p>";return;}
+if(dk!==pageKind){out.innerHTML="<p style='color:#a02424'><b>"+KN[dk]+" 기록입니다.</b> "+KS[dk]+"의 "+(dk==="week"?"작성":"신규 작성")+" 화면을 열고 다시 눌러 주세요.</p>";return;}
+if(dk==="week"){var rd=F.report_dt?F.report_dt.value:"";if(rd!==d.date){out.innerHTML="<p style='color:#a02424'><b>다른 주의 화면입니다.</b> 이 화면은 "+h(rd||"날짜 없음")+", 복사한 일지는 "+h(d.date)+"(월) 주입니다.</p><p><button type='button' class='ksl-goweek'>"+h(d.date)+" 주 화면으로 이동</button></p><p style='font-size:12px;margin:4px 0 0'>이동한 뒤 ‘업무일지 채우기’를 다시 누르고 Ctrl+V 하세요.</p>";box.querySelector(".ksl-goweek").onclick=function(){location.href="week_form.php?doc_type=C&report_dt="+encodeURIComponent(d.date);};return;}}
 var P=dk==="counsel"?"상담":"수어통역",N=dk==="counsel"?"상담":"통역",PS=dk==="counsel"?"상담사":"수어통역사";
 var done=[],warn=[],todo=[];
 function mark(el){el.style.background="#fff3b0";el.style.outline="2px solid #e0a73a";}
@@ -31,7 +32,15 @@ function text(name,val,label,max){var el=F.elements[name];if(!el){warn.push(labe
 function pick(name,label,val,map){var els=F.querySelectorAll("[name='"+name+"']"),hit=null;for(var i=0;i<els.length;i++){var lt=lab(els[i]);if(lt===val)hit=els[i];}
  if(!val){return;}if(!hit){warn.push(label+": ‘"+val+"’ 선택지를 찾지 못함");return;}hit.checked=true;mark(hit.parentNode||hit);try{hit.dispatchEvent(new Event("change",{bubbles:true}));}catch(x){}done.push(label);}
 function lab(el){var n=el.nextSibling,s="";while(n&&!(n.nodeType===1&&n.tagName==="INPUT")){s+=n.textContent||"";n=n.nextSibling;if(s.trim().length>10)break;}return s.replace(/\s+/g," ").trim();}
-if(isEduK){
+if(dk==="week"){
+var DN="월화수목금토일",changed=[];
+for(var wi=0;wi<7;wi++){var wel=F.elements["etc_content_"+(wi+1)],wv=(d.days&&d.days[wi])||"";if(!wel){warn.push(DN.charAt(wi)+"요일 기타: 입력칸을 찾지 못함");continue;}if(!wv)continue;
+ var wcur=wel.value.replace(/\s+$/,"");if(wcur&&wcur!==wv)changed.push(DN.charAt(wi));wel.value=wv;mark(wel);done.push(DN.charAt(wi)+"요일 기타");}
+if(changed.length)warn.push("이미 적혀 있던 "+changed.join("·")+"요일 기타 내용을 앱 내용으로 바꿨습니다. 확인하세요.");
+var tcn=0;for(var tj=1;tj<=7;tj++){var tel=F.elements["trans_content_"+tj];if(tel&&tel.value.trim())tcn++;}
+todo.push(tcn?"통역및상담 칸은 협회 시스템이 채운 그대로 두었습니다. 빠진 건이 없는지 확인하세요.":"통역및상담 칸이 비어 있습니다. 이 주의 통역·상담을 먼저 등록했는지 확인하세요.");
+d.client="";d.deafNames="";d.hearingNames="";
+}else if(isEduK){
 text("teacher_nm",d.interpreter,"강사명",20);text("aid_teacher_nm",d.aidTeacher,"보조강사명",40);text("lecture_nm",d.program,dk==="edu"?"강좌명":"프로그램명",40);text("location_grp_nm",d.group,"단체명",40);
 var me=/^(\d{4})-(\d{2})-(\d{2})$/.exec(d.date||"");
 if(me&&F.edu_dt){var de=new Date(+me[1],+me[2]-1,+me[3]),ve=null;try{ve=window.jQuery&&jQuery.datepicker?jQuery.datepicker.formatDate(jQuery.datepicker._defaults.dateFormat||"yy-mm-dd",de):null;}catch(x){ve=null;}if(!ve)ve=d.date;F.edu_dt.value=ve;mark(F.edu_dt);done.push("날짜");}
@@ -87,6 +96,12 @@ if(!F.__kslHooked){F.__kslHooked=true;
  var nativeSubmit=F.submit;F.submit=function(){notify();return nativeSubmit.call(F);};
  F.addEventListener("submit",function(e){setTimeout(function(){if(!e.defaultPrevented)notify();},0);});}
 out.innerHTML=html;ta.value="";ta.style.display="none";box.querySelector("p").style.display="none";
+if(dk==="week"&&!(F.modify&&F.modify.value)&&window.fetch){var wend=new Date(d.date+"T00:00:00Z");wend.setUTCDate(wend.getUTCDate()+6);wend=wend.toISOString().slice(0,10);
+ fetch("week_list.php?doc_type=C",{credentials:"same-origin"}).then(function(r){return r.text();}).then(function(t){
+  var re=/week_detail\('(\d+)'\)[^>]*>\s*([\d-]{10})/g,mm,hits=[];while((mm=re.exec(t))){if(mm[2]>=d.date&&mm[2]<=wend)hits.push(mm);}
+  if(!hits.length)return;var dv=document.createElement("div");dv.style.cssText="background:#fde8e8;color:#8a1f1f;padding:8px;border-radius:8px;margin:8px 0";
+  dv.innerHTML="<b>이 주의 주간업무일지가 이미 등록되어 있습니다.</b> 새로 등록하면 두 건이 됩니다. 기존 일지를 열어 고치려면: "+hits.map(function(x){return "<a href='week_form.php?modify="+x[1]+"&doc_type=C&page=1'>"+h(x[2])+" 일지 열기</a>";}).join(" ")+"<br><span style='font-size:12px'>연 뒤 ‘업무일지 채우기’를 다시 누르고 Ctrl+V 하세요.</span>";
+  out.insertBefore(dv,out.firstChild);}).catch(function(){});}
 var cb=box.querySelector(".ksl-client");if(cb)cb.onclick=function(){openPop("pop_deaf_list.php?person_type=&search_type=name&search="+encodeURIComponent(d.client||""),"target_member_detail");};
 Array.prototype.forEach.call(box.querySelectorAll(".ksl-person"),function(b){b.onclick=function(){
  var deaf=b.getAttribute("data-kind")==="deaf",nm=deaf?"reqPersonNm[]":"visitPersonNm[]",rows=document.getElementsByName(nm),idx=-1;
